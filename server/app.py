@@ -164,9 +164,10 @@ class Handler(BaseHTTPRequestHandler):
             seed = int(data.get("seed", 1))
             variety = float(data.get("variety", 0.15))
             gen = calendar_gen.generate(CAREER, seed=seed, teams=[tid], variety=variety)
+            plan = gen[tid]["plan"]
             preview = [{"race": e["race"], "name": e["name"], "day": e["day"], "month": e["month"],
                         "leader": CAREER.rider_label(e["leader"]),
-                        "roster": [CAREER.rider_label(x) for x in e["roster"]]} for e in gen[tid]]
+                        "roster": [CAREER.rider_label(x) for x in e["roster"]]} for e in plan]
             if data.get("apply"):
                 calendar_gen.apply(CAREER, gen)
             return self._send(200, {"planned": len(preview), "preview": preview})
@@ -175,7 +176,7 @@ class Handler(BaseHTTPRequestHandler):
             variety = float(data.get("variety", 0.15))
             gen = calendar_gen.generate(CAREER, seed=seed, variety=variety)
             changed = calendar_gen.apply(CAREER, gen)
-            teams = sum(1 for v in gen.values() if v)
+            teams = sum(1 for v in gen.values() if v["plan"])
             return self._send(200, {"teams": teams, "rosters": changed})
         if u.path == "/api/objective":
             added = CAREER.toggle_objective(int(data["rider"]), int(data["race"]))
