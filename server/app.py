@@ -213,9 +213,20 @@ class Handler(BaseHTTPRequestHandler):
             res = calendar_gen.build_from_captains(CAREER, tid, captain_races, roles=roles,
                                                    seed=int(data.get("seed", 7)))
             changed = calendar_gen.apply(CAREER, {tid: res})
+            # dynamic form: peak each captain around their biggest targets
+            peaked = 0
+            if data.get("peaks", True):
+                year = CAREER.season_year()
+                for rider, races in res["objectives"].items():
+                    big = sorted((CAREER.races[r] for r in races),
+                                 key=lambda ra: -ra["popularity"])[:3]
+                    dates = [year * 10000 + ra["month"] * 100 + ra["day"] for ra in big if ra["popularity"] >= 60]
+                    if dates:
+                        CAREER.set_peaks(rider, dates); peaked += 1
             if data.get("save"):
                 CAREER.save()
-            return self._send(200, {"ok": True, "rosters": changed, "planned": len(res["plan"])})
+            return self._send(200, {"ok": True, "rosters": changed,
+                                    "planned": len(res["plan"]), "peaked": peaked})
         if u.path == "/api/generate-all":
             seed = int(data.get("seed", 1))
             variety = float(data.get("variety", 0.15))

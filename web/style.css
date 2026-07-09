@@ -279,6 +279,8 @@ button{font-family:inherit;cursor:pointer}
 .rchip[data-race]:hover{border-color:var(--grn)}
 .rchip.ghost{background:transparent;border-style:dashed;border-color:var(--line);color:var(--mut2)}
 .rchip.ghost:hover{color:var(--txt);border-color:var(--grn)}
+.rchip.peak{background:linear-gradient(135deg,rgba(55,224,139,.2),rgba(251,191,36,.2));
+  border-color:var(--grn);color:#bff5d8;font-weight:700}
 .planlegend{display:flex;gap:16px;margin-bottom:12px;font-size:11.5px;color:var(--mut)}
 .planlegend i{display:inline-block;width:16px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
 
@@ -302,6 +304,9 @@ code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding
 .fctl input[type=range]{flex:1;accent-color:var(--grn)}
 .fctl .fv{width:30px;text-align:right;font-variant-numeric:tabular-nums;font-size:12px;font-weight:600}
 .fctl.fat input[type=range]{accent-color:var(--red)}
+.fbar{flex:1;height:7px;border-radius:6px;background:var(--line);overflow:hidden}
+.fbar>i{display:block;height:100%;border-radius:6px;background:var(--grn)}
+.fbar.fat>i{background:var(--red)}
 .campbook{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:14px}
 .camplist{max-height:44vh;overflow-y:auto}
 .camprow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:12.5px}

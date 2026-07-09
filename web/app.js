@@ -354,13 +354,17 @@ function renderPlanner(){
     const nsel=c.candidates.filter(r=>sel.has(r.race)).length;
     html+=`<div class="planrow ${cls}"><div class="cap"><div class="cn">${c.name}</div>
       <div class="cmeta">${c.specialty} · <b>${nsel}</b> koersen</div><span class="rolechip">${c.role.toUpperCase()}</span></div>`;
+    // dynamic form: the 3 biggest chosen races become peak targets
+    const peaks=new Set(c.candidates.filter(r=>sel.has(r.race)&&r.pop>=60)
+      .sort((a,b)=>b.pop-a.pop).slice(0,3).map(r=>r.race));
     const byMonth={}; c.candidates.forEach(r=>(byMonth[r.month]=byMonth[r.month]||[]).push(r));
     for(let m=1;m<=12;m++){
       html+=`<div class="mcell">`;
       (byMonth[m]||[]).sort((a,b)=>a.day-b.day).forEach(r=>{
         const on=sel.has(r.race);
-        const klass=on?(r.pop>=70?'big':''):'ghost';
-        html+=`<span class="rchip ${klass}" data-cap="${c.id}" data-race="${r.race}" title="${r.name} · fit ${Math.round(r.fit)}${on?'':' — klik om toe te voegen'}">${String(r.day).padStart(2,'0')} ${r.name.slice(0,15)}</span>`;
+        const klass=on?(peaks.has(r.race)?'peak':(r.pop>=70?'big':'')):'ghost';
+        const mark=peaks.has(r.race)?'▲ ':'';
+        html+=`<span class="rchip ${klass}" data-cap="${c.id}" data-race="${r.race}" title="${r.name} · fit ${Math.round(r.fit)}${peaks.has(r.race)?' · VORMPIEK':''}${on?'':' — klik om toe te voegen'}">${mark}${String(r.day).padStart(2,'0')} ${r.name.slice(0,14)}</span>`;
       });
       (d.camps||[]).forEach(cp=>{ if(+String(cp.start).slice(4,6)===m)
         html+=`<span class="rchip camp" title="Trainingskamp ${cp.place}">🏔 ${cp.place.slice(0,12)}</span>`; });
@@ -375,7 +379,7 @@ function renderPlanner(){
     sel.has(race)?sel.delete(race):sel.add(race); renderPlanner();
   });
   const total=d.captains.reduce((a,c)=>a+c.candidates.filter(r=>setup.captainRaces[c.id].has(r.race)).length,0);
-  $("#setupInfo").innerHTML=`<b>${total}</b> doelkoersen voor kopmannen/co-leiders · knechten worden auto op routeprofiel aangevuld`;
+  $("#setupInfo").innerHTML=`<b>${total}</b> doelkoersen · <span style="color:var(--grn)">▲ vormpiek</span> = automatisch rond de 3 grootste doelen · knechten auto op routeprofiel`;
   $("#setupActions").innerHTML=`<button class="btn ghost" id="setupBack">← Rollen</button>
     <button class="btn primary" id="setupApply">Toepassen &amp; opslaan in career</button>`;
   $("#setupBack").onclick=()=>{ setup.phase=1; renderSetup(); };
@@ -409,21 +413,14 @@ async function loadForm(){
   $("#formList").innerHTML=`<div class="formrow head"><span>Renner</span><span>Frisheid</span><span>Vermoeidheid</span><span>Vorm</span></div>`;
   d.riders.forEach(r=>$("#formList").appendChild(formRow(r)));
 }
-function slider(r,key,cls){
-  const wrap=el("div","fctl"+(cls?" "+cls:""));
-  wrap.innerHTML=`<input type="range" min="0" max="100" value="${Math.round(r[key])}"><span class="fv">${Math.round(r[key])}</span>`;
-  const inp=wrap.querySelector("input"), fv=wrap.querySelector(".fv");
-  inp.oninput=()=>fv.textContent=inp.value;
-  inp.onchange=async()=>{ await api("/api/form",{method:"POST",headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({rider:r.id,fields:{[key]:+inp.value}})}); toast("Vorm bijgewerkt"); };
-  return wrap;
+function fbar(v,cls){
+  return `<div class="fctl"><div class="fbar ${cls||''}"><i style="width:${Math.min(100,Math.round(v))}%"></i></div>
+    <span class="fv">${Math.round(v)}</span></div>`;
 }
 function formRow(r){
   const row=el("div","formrow");
-  row.innerHTML=`<div class="fname">${r.name}<small>${r.specialty} · niv. ${r.ability}</small></div>`;
-  row.appendChild(slider(r,"freshness"));
-  row.appendChild(slider(r,"fatigue","fat"));
-  row.appendChild(slider(r,"fit"));
+  row.innerHTML=`<div class="fname">${r.name}<small>${r.specialty} · niv. ${r.ability}</small></div>`+
+    fbar(r.freshness)+fbar(r.fatigue,"fat")+fbar(r.fit);
   return row;
 }
 $("#bulkFresh").onclick=async()=>{ await api("/api/form-bulk",{method:"POST",headers:{'Content-Type':'application/json'},

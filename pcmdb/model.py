@@ -291,6 +291,38 @@ class Career:
             vals[i] = float(v)
             t.set_column(col_name, vals)
 
+    # ---- dynamic form: peak windows (DYN_cyclist_fitpeak_history) ----
+    def set_peaks(self, rider_id, target_dates, lead_days=20):
+        """Replace a rider's CURRENT-season peak windows so they peak on their
+        target races. target_dates: list of YYYYMMDD ints. Keeps other seasons."""
+        import datetime
+        year = self.season_year()
+        t = self.db["DYN_cyclist_fitpeak_history"]
+        ids = t.column("IDcyclist_fitpeak_history")
+        cyc = t.column("fkIDcyclist")
+        b = t.column("value_i_date_begin")
+        emin = t.column("value_i_date_end_min")
+        emax = t.column("value_i_date_end_max")
+        # keep rows that are NOT (this rider AND this season)
+        keep = [i for i in range(len(ids))
+                if not (cyc[i] == rider_id and b[i] // 10000 == year)]
+        nids = [ids[i] for i in keep]; ncyc = [cyc[i] for i in keep]
+        nb = [b[i] for i in keep]; nmin = [emin[i] for i in keep]; nmax = [emax[i] for i in keep]
+        nxt = (max(ids) + 1) if ids else 1
+        for d in sorted(target_dates):
+            y, m, dd = d // 10000, (d // 100) % 100, d % 100
+            try:
+                end = datetime.date(y, m, dd)
+            except ValueError:
+                continue
+            begin = end - datetime.timedelta(days=lead_days)
+            bi = begin.year * 10000 + begin.month * 100 + begin.day
+            nids.append(nxt); ncyc.append(rider_id); nb.append(bi)
+            nmin.append(d); nmax.append(d); nxt += 1
+        t.set_data({"IDcyclist_fitpeak_history": nids, "fkIDcyclist": ncyc,
+                    "value_i_date_begin": nb, "value_i_date_end_min": nmin,
+                    "value_i_date_end_max": nmax})
+
     # ---- training camps (STA_training_stages / DYN_training_stage_booking) ----
     def camps(self, month=None):
         t = self.db["STA_training_stages"]
