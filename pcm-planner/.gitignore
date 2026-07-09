@@ -1,0 +1,9 @@
+# game databases / saves — never commit these
+*.cdb
+*.raw
+*.sav
+
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
