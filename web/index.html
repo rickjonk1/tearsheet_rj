@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Peloton — Season Planner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="8" cy="23" r="5.5" class="wheel"/>
+        <circle cx="24" cy="23" r="5.5" class="wheel"/>
+        <path d="M8 23 L15 12 L22 23 M15 12 L18 12 M13 12 L20 12" class="frame"/>
+        <path d="M8 23 L18 12" class="frame"/>
+      </svg>
+      <div class="brandtext">
+        <strong>PELOTON</strong>
+        <span>Season Planner</span>
+      </div>
+    </div>
+    <div class="topmeta" id="topmeta"></div>
+    <div class="topactions">
+      <button class="btn ghost" id="btnGenerate">✨ Realistische kalender</button>
+      <button class="btn primary" id="btnSave">Opslaan</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="rail">
+      <div class="rail-section">
+        <label class="rail-label">Ploeg</label>
+        <input id="teamSearch" class="search" placeholder="Zoek ploeg…" autocomplete="off">
+        <div id="teamList" class="teamlist"></div>
+      </div>
+      <div class="rail-section" id="teamCard"></div>
+    </aside>
+
+    <section class="board">
+      <div class="board-head">
+        <div>
+          <h1 id="boardTitle">Kies een ploeg</h1>
+          <p class="sub" id="boardSub">1 januari · start van het seizoen</p>
+        </div>
+        <div class="seasonstats" id="seasonStats"></div>
+      </div>
+      <div id="calendar" class="calendar"></div>
+    </section>
+
+    <aside class="editor" id="editor">
+      <div class="editor-empty" id="editorEmpty">
+        <div class="editor-empty-inner">
+          <div class="hint-icon">🚴</div>
+          <p>Selecteer een koers om de selectie samen te stellen.</p>
+        </div>
+      </div>
+      <div class="editor-body" id="editorBody" hidden></div>
+    </aside>
+  </main>
+
+  <div class="modal" id="genModal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Realistische kalender genereren</h2>
+        <button class="iconbtn" id="genClose">✕</button>
+      </div>
+      <p class="modal-sub">Verdeelt de renners van deze ploeg over hun koersen op basis van
+        specialiteit, niveau en belasting. Elke seed geeft een ander, realistisch seizoen.</p>
+      <div class="genctrls">
+        <label>Seed <input type="number" id="genSeed" value="7" min="1"></label>
+        <label>Variatie <input type="range" id="genVariety" min="0" max="40" value="15"><span id="genVarietyVal">15%</span></label>
+      </div>
+      <div class="genactions">
+        <button class="btn ghost" id="genPreview">Voorbeeld</button>
+        <button class="btn primary" id="genApply">Toepassen</button>
+      </div>
+      <div id="genResult" class="genresult"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
