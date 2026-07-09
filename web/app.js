@@ -278,10 +278,13 @@ $("#loadClose").onclick=()=>$("#loadModal").hidden=true;
 
 /* ---------- seizoen opzetten: rollen + horizontale jaarplanner ---------- */
 const setup={phase:1, roles:{}, data:null};
-$("#btnSetup").onclick=()=>{ if(state.teamId==null) return toast("Kies eerst een ploeg");
+function openSetup(){
+  if(state.teamId==null) return toast("Kies eerst een ploeg");
   setup.phase=1; setup.roles={}; setup.data=null;
   state.squad.forEach((s,i)=>setup.roles[s.id]= i<3?'leader':(i<7?'co':'dom'));
-  $("#setupModal").hidden=false; renderSetup(); };
+  $("#setupModal").hidden=false; renderSetup();
+}
+$("#btnSetup").onclick=openSetup;
 $("#setupClose").onclick=()=>$("#setupModal").hidden=true;
 
 function roleCounts(){ const c={leader:0,co:0,dom:0}; Object.values(setup.roles).forEach(r=>c[r]++); return c; }
@@ -423,10 +426,15 @@ async function applySeason(){
   const {leaders,coleaders}=setupRoleArrays();
   const captains={};
   Object.keys(setup.captainRaces).forEach(id=>captains[id]=[...setup.captainRaces[id]]);
-  $("#setupActions").innerHTML=`<span style="color:var(--mut)">Opslaan…</span>`;
+  $("#setupActions").innerHTML=`<span style="color:var(--mut)">Jouw seizoen toepassen…</span>`;
   const r=await api("/api/season-apply",{method:"POST",headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({team:state.teamId,leaders,coleaders,captains,save:true})});
-  $("#setupModal").hidden=true; toast(`Seizoen opgeslagen · ${r.rosters} rosters`); refreshTeam();
+    body:JSON.stringify({team:state.teamId,leaders,coleaders,captains,save:false})});
+  // AI-teams op de achtergrond, zelfde logica (jouw ploeg wordt niet overschreven)
+  $("#setupActions").innerHTML=`<span style="color:var(--mut)">Peloton (AI) genereren…</span>`;
+  const a=await api("/api/generate-all",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({exclude:state.teamId,seed:7,save:true})});
+  $("#setupModal").hidden=true;
+  toast(`Seizoen opgeslagen · jij ${r.rosters} rosters · ${a.teams} AI-ploegen`); refreshTeam();
 }
 
 /* ---------- vorm & training ---------- */
@@ -517,61 +525,32 @@ $("#genAll").onclick=async()=>{
 
 /* ---------- onboarding wizard ---------- */
 const wiz={step:0, team:null};
-const WIZ_STEPS=4;
+const WIZ_STEPS=2;
 function openWizard(){ wiz.step=0; wiz.team=null; $("#wizard").hidden=false; renderWizard(); }
 function closeWizard(){ $("#wizard").hidden=true; if(wiz.team!=null) selectTeam(wiz.team);
   else if(state.teams.length) selectTeam(state.teams[0].id); }
+async function wizToSetup(){ if(wiz.team==null) return; $("#wizard").hidden=true;
+  await selectTeam(wiz.team); openSetup(); }
 function renderWizard(){
   $("#wizSteps").innerHTML=Array.from({length:WIZ_STEPS},(_,i)=>`<div class="s ${i<=wiz.step?'on':''}"></div>`).join("");
   const body=$("#wizBody");
   if(wiz.step===0){
     body.innerHTML=`<div class="wiz-hero">
       <div class="wiz-kicker">1 Januari · Seizoensstart</div>
-      <h1>Welkom bij je nieuwe seizoen</h1>
-      <p>We stellen samen een realistisch wielerseizoen samen — jouw ploeg én het hele peloton.
-         In een paar stappen sta je klaar aan de start.</p></div>
-      <div class="wiz-actions"><button class="wiz-skip" id="wizSkip">Overslaan</button>
-        <div class="spacer"></div><button class="btn primary" id="wizNext">Beginnen →</button></div>`;
-  }
-  else if(wiz.step===1){
+      <h1>Bouw je seizoen</h1>
+      <p>Kies je ploeg en bepaal je kopmannen en co-leiders. Vandaaruit bouwt de planner hun
+         schema én de knechten op — automatisch op basis van route en logica.</p></div>
+      <div class="wiz-actions"><button class="wiz-skip" id="wizSkip">Later</button>
+        <div class="spacer"></div><button class="btn primary" id="wizNext">Kies je ploeg →</button></div>`;
+  } else {
     body.innerHTML=`<div class="wiz-hero"><div class="wiz-kicker">Stap 1</div><h1>Kies je ploeg</h1>
       <p>Welke ploeg ga jij dit seizoen managen?</p></div>
       <input id="wizSearch" class="search" placeholder="Zoek ploeg…" autocomplete="off">
       <div class="wiz-teams" id="wizTeams"></div>
       <div class="wiz-actions"><button class="btn ghost" id="wizBack">← Terug</button>
-        <div class="spacer"></div><button class="btn primary" id="wizNext" ${wiz.team==null?'disabled style="opacity:.4"':''}>Verder →</button></div>`;
+        <div class="spacer"></div><button class="btn primary" id="wizNext" ${wiz.team==null?'disabled style="opacity:.4"':''}>Naar leiders &amp; co-leiders →</button></div>`;
     renderWizTeams(state.teams);
     $("#wizSearch").oninput=e=>renderWizTeams(state.teams.filter(t=>t.name.toLowerCase().includes(e.target.value.toLowerCase())));
-  }
-  else if(wiz.step===2){
-    const tn=state.teams.find(t=>t.id===wiz.team);
-    body.innerHTML=`<div class="wiz-hero"><div class="wiz-kicker">Stap 2</div><h1>Realistisch peloton</h1>
-      <p>Genereer een dynamische kalender voor alle ploegen — gericht op de specialiteiten van
-         hun renners. Elk seizoen is anders.</p></div>
-      <div class="wiz-picked"><div class="badge">${tn?initials(tn.topRider):'?'}</div>
-        <div><div style="font-weight:650">${tn?tn.name:''}</div>
-        <div style="font-size:12px;color:var(--mut)">jouw ploeg</div></div></div>
-      <div class="wiz-genbox" id="wizGenBox">
-        <button class="btn gold" id="wizGen">✨ Genereer het seizoen (alle ploegen)</button>
-        <div style="font-size:12px;color:var(--mut2);margin-top:10px">Optioneel — je kunt ook zelf plannen.</div>
-      </div>
-      <div class="wiz-actions"><button class="btn ghost" id="wizBack">← Terug</button>
-        <div class="spacer"></div><button class="btn primary" id="wizNext">Verder →</button></div>`;
-    $("#wizGen").onclick=async()=>{
-      $("#wizGenBox").innerHTML='<div class="spinner"></div><div style="color:var(--mut);font-size:13px">Peloton plannen…</div>';
-      const r=await api("/api/generate-all",{method:"POST",headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({seed:7,variety:.15})});
-      $("#wizGenBox").innerHTML=`<div class="big">${r.rosters}</div>
-        <div style="color:var(--mut);font-size:13px">rosters gepland over ${r.teams} ploegen ✓</div>`;
-    };
-  }
-  else {
-    const tn=state.teams.find(t=>t.id===wiz.team);
-    body.innerHTML=`<div class="wiz-hero"><div class="wiz-kicker">Klaar</div><h1>Aan de start</h1>
-      <p>Je seizoen staat klaar. Open koersen op de kalender, stel selecties samen op basis van
-         fit, en markeer doelkoersen met een ster. Vergeet niet op te slaan.</p></div>
-      <div class="wiz-actions"><div class="spacer"></div>
-        <button class="btn primary" id="wizDone">Aan de slag met ${tn?tn.name:'je ploeg'} →</button></div>`;
   }
   wireWizard();
 }
@@ -586,11 +565,10 @@ function renderWizTeams(list){
   });
 }
 function wireWizard(){
-  const nx=$("#wizNext"), bk=$("#wizBack"), sk=$("#wizSkip"), dn=$("#wizDone");
-  if(nx) nx.onclick=()=>{ if(wiz.step===1&&wiz.team==null)return; wiz.step++; renderWizard(); };
-  if(bk) bk.onclick=()=>{ wiz.step--; renderWizard(); };
+  const nx=$("#wizNext"), bk=$("#wizBack"), sk=$("#wizSkip");
+  if(nx) nx.onclick=()=>{ if(wiz.step===0){ wiz.step=1; renderWizard(); } else { wizToSetup(); } };
+  if(bk) bk.onclick=()=>{ wiz.step=0; renderWizard(); };
   if(sk) sk.onclick=closeWizard;
-  if(dn) dn.onclick=closeWizard;
 }
 
 /* ---------- save ---------- */

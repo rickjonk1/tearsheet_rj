@@ -231,10 +231,16 @@ class Handler(BaseHTTPRequestHandler):
         if u.path == "/api/generate-all":
             seed = int(data.get("seed", 1))
             variety = float(data.get("variety", 0.15))
-            gen = calendar_gen.generate(CAREER, seed=seed, variety=variety)
+            exclude = data.get("exclude")
+            teams = None
+            if exclude is not None:
+                teams = [t for t in CAREER.teams if t != int(exclude)]
+            gen = calendar_gen.generate(CAREER, seed=seed, variety=variety, teams=teams)
             changed = calendar_gen.apply(CAREER, gen)
-            teams = sum(1 for v in gen.values() if v["plan"])
-            return self._send(200, {"teams": teams, "rosters": changed})
+            if data.get("save"):
+                CAREER.save()
+            return self._send(200, {"teams": sum(1 for v in gen.values() if v["plan"]),
+                                    "rosters": changed})
         if u.path == "/api/objective":
             added = CAREER.toggle_objective(int(data["rider"]), int(data["race"]))
             return self._send(200, {"added": added})
