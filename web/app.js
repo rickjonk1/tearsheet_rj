@@ -24,6 +24,15 @@ function initials(name){ const p=name.trim().split(/\s+/); return ((p[0]||"")[0]
 /* ---------- bootstrap ---------- */
 async function boot(){
   const b = await api("/api/bootstrap");
+  // desktop mode exposes window.pywebview -> show the native Open button
+  if(window.pywebview) $("#btnOpen").hidden=false;
+  if(!b.loaded){
+    $("#topmeta").innerHTML=`<span style="color:var(--mut2)">Geen career geladen — open een .cdb</span>`;
+    $("#boardTitle").textContent="Open een career";
+    $("#boardSub").textContent="Kies een PCM .cdb-bestand om te beginnen.";
+    $("#btnOpen").hidden=false;
+    return;
+  }
   state.teams = b.teams;
   $("#topmeta").innerHTML =
     `<span><b>${b.counts.riders.toLocaleString('nl')}</b> renners</span>`+
@@ -33,6 +42,17 @@ async function boot(){
   renderTeams(state.teams);
   openWizard();
 }
+
+$("#btnOpen").onclick=async()=>{
+  if(window.pywebview && window.pywebview.api){
+    const r=await window.pywebview.api.pick();
+    if(r&&r.ok){ toast("Career geladen"); boot(); }
+  } else {
+    const path=prompt("Pad naar .cdb-bestand:");
+    if(path){ const r=await api("/api/open",{method:"POST",headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({path})}); if(r.ok){ toast("Career geladen"); boot(); } }
+  }
+};
 
 function renderTeams(list){
   const box = $("#teamList"); box.innerHTML="";
@@ -118,6 +138,7 @@ function raceCard(p){
         <span class="jersey" style="color:${tt.c};background:${tt.bg}">${tt.l}</span>
         ${stars(p.popularity)}
         ${p.objectives?`<span class="objtag">★ ${p.objectives} doel${p.objectives>1?'en':''}</span>`:''}
+        ${p.warn?`<span class="warntag">⚠ ${p.warn}</span>`:''}
       </div>
     </div>
     <div class="right">
@@ -136,15 +157,16 @@ async function openEditor(row){
   const p=state.program.find(x=>x.row===row);
   $("#editorEmpty").hidden=true;
   const body=$("#editorBody"); body.hidden=false;
-  // per-race fit for the whole squad
-  const fitMap = await api(`/api/fit?team=${state.teamId}&race=${p.race}`);
-  state.fitMap = fitMap;
+  // per-race fit + scheduling conflicts for the whole squad
+  const res = await api(`/api/fit?team=${state.teamId}&race=${p.race}`);
+  const fitMap = res.fit; const busy = new Set(res.busy);
+  state.fitMap = fitMap; state.busy = busy;
   p.roster.forEach(r=>r.fit = fitMap[r.id] ?? r.fit);
   const inRoster=new Set(p.roster.map(r=>r.id));
   const suggestions = state.squad
     .filter(s=>!inRoster.has(s.id))
-    .map(s=>({...s, fit: fitMap[s.id] ?? 0}))
-    .sort((a,b)=>b.fit-a.fit);
+    .map(s=>({...s, fit: fitMap[s.id] ?? 0, busy: busy.has(s.id)}))
+    .sort((a,b)=>(a.busy-b.busy) || (b.fit-a.fit));
   const tt=tier(p.popularity, p.klass);
   const cap = 8;
   body.innerHTML=`
@@ -175,17 +197,21 @@ function estFit(s,p){ // client-side fallback (server gives fit for current rost
 }
 
 function riderRow(r,p,inRoster,isLead){
-  const row=el("div","rider"+(inRoster?"":" sug"));
+  const row=el("div","rider"+(inRoster?"":" sug")+(r.busy?" busy":""));
   const fit=Math.round(r.fit||0);
   const star = inRoster ? `<button class="objbtn ${r.obj?'on':''}" title="Doelkoers voor deze renner">${r.obj?'★':'☆'}</button>` : '';
+  const warn = inRoster && r.warn ? '<span class="wdot" title="Overlapt met andere koers">⚠</span>' : '';
+  const fitcell = r.busy
+    ? `<div class="fitwrap"><span class="busytag">bezet</span></div>`
+    : `<div class="fitwrap"><div class="fitbar"><i style="width:${Math.min(100,fit)}%"></i></div>
+        <div class="fitval">${fit} fit</div></div>`;
   row.innerHTML=`
     <div class="rr-name">
-      <div class="nm">${r.name} ${isLead?'<span class="leadtag">KOPMAN</span>':''}</div>
+      <div class="nm">${r.name} ${isLead?'<span class="leadtag">KOPMAN</span>':''}${warn}</div>
       <div class="sp">${r.specialty}</div>
     </div>
     <span class="abil">${r.ability}</span>
-    <div class="fitwrap"><div class="fitbar"><i style="width:${Math.min(100,fit)}%"></i></div>
-      <div class="fitval">${fit} fit</div></div>
+    ${fitcell}
     ${star}
     <button class="rr-act ${inRoster?'rm':''}">${inRoster?'−':'+'}</button>`;
   if(inRoster) row.querySelector(".objbtn").onclick=(e)=>{ e.stopPropagation(); toggleObjective(p,r); };
@@ -219,13 +245,36 @@ async function removeRider(p,id){
 }
 async function autofill(p){
   const cap=8; const have=new Set(p.roster.map(r=>r.id));
-  const fm=state.fitMap||{};
-  const add=state.squad.filter(s=>!have.has(s.id))
-    .sort((a,b)=>((fm[b.id]||0)*1.4+b.ability)-((fm[a.id]||0)*1.4+a.ability)); // fit + ability
+  const fm=state.fitMap||{}; const busy=state.busy||new Set();
+  const add=state.squad.filter(s=>!have.has(s.id) && !busy.has(s.id))   // skip conflicting riders
+    .sort((a,b)=>((fm[b.id]||0)*1.4+b.ability)-((fm[a.id]||0)*1.4+a.ability));
   for(const s of add){ if(p.roster.length>=cap) break;
     p.roster.push({id:s.id,name:s.name,ability:s.ability,specialty:s.specialty,fit:fm[s.id]||0}); }
-  await commitRoster(p); await refreshTeam(); toast("Selectie aangevuld op specialiteit");
+  await commitRoster(p); await refreshTeam(); toast("Selectie aangevuld (fit, zonder conflicten)");
 }
+
+/* ---------- load / conflicts overview ---------- */
+$("#btnLoad").onclick=async()=>{ if(state.teamId==null) return toast("Kies eerst een ploeg");
+  $("#loadModal").hidden=false;
+  $("#loadTable").innerHTML='<div class="skeleton">Belasting berekenen…</div>';
+  const d=await api("/api/load?team="+state.teamId);
+  const maxDays=Math.max(1,...d.riders.map(r=>r.racedays));
+  $("#loadSummary").textContent=`${d.riders.length} renners · ${d.conflicts} planningsconflict${d.conflicts===1?'':'en'} in het seizoen.`;
+  $("#loadTable").innerHTML=
+    `<div class="loadrow head"><span>Renner</span><span class="num">Dagen</span><span>Belasting</span><span class="num">Doelen</span><span class="confpill">⚠</span></div>`+
+    d.riders.map(r=>{
+      const pct=Math.round(r.racedays/maxDays*100);
+      const over=r.racedays>85;
+      return `<div class="loadrow">
+        <span class="lname">${r.name}<small>${r.specialty} · ${r.races} koersen</small></span>
+        <span class="num">${r.racedays}</span>
+        <span><div class="loadbar"><i class="${over?'over':''}" style="width:${pct}%"></i></div></span>
+        <span class="num">${r.objectives||'–'}</span>
+        <span class="confpill ${r.conflicts?'bad':'ok'}">${r.conflicts||'·'}</span>
+      </div>`;
+    }).join("");
+};
+$("#loadClose").onclick=()=>$("#loadModal").hidden=true;
 
 /* ---------- generator modal ---------- */
 $("#btnGenerate").onclick=()=>{ if(state.teamId==null) return toast("Kies eerst een ploeg");

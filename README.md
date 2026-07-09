@@ -11,12 +11,25 @@ later als **desktop-applicatie** ingepakt te worden.
 
 ## De app draaien
 
+**Als desktop-app** (native venster, met bestandskeuze):
+
+```bash
+pip install pywebview          # eenmalig, voor het native venster
+python desktop.py              # opent een bestandskiezer, of:
+python desktop.py Career.cdb
+```
+
+Zonder pywebview valt `desktop.py` terug op je browser.
+
+**Of als web-app:**
+
 ```bash
 python -m server.app /pad/naar/Career.cdb        # start op http://127.0.0.1:8765
 # open die URL in je browser
 ```
 
-Geen dependencies nodig — de backend draait op Python's standaardbibliotheek.
+De backend draait op Python's standaardbibliotheek (nul runtime-deps); `pywebview`
+is alleen nodig voor het native desktop-venster.
 
 Wat de planner nu kan:
 - **Seizoenskalender** per ploeg, met datums, prestige (WorldTour/Pro/Continental/NK)
@@ -24,9 +37,14 @@ Wat de planner nu kan:
 - **Selectie samenstellen** per koers: huidige renners + gerangschikte suggesties
   met een **fit-score** (specialiteit × koerseisen) en niveau.
 - **Automatisch aanvullen** op specialiteit.
-- **Realistische kalender genereren** voor een ploeg: verdeelt renners over hun
-  koersen op basis van specialiteit, niveau en belasting; seed + variatie zorgen
-  dat elk seizoen anders is. Bewaart support-groepen en respecteert roster-limieten.
+- **Realistische kalender genereren** voor één ploeg óf het **hele peloton**:
+  verdeelt renners over hun koersen op basis van specialiteit, niveau en belasting;
+  seed + variatie zorgen dat elk seizoen anders is. Support-groepen blijven bijeen,
+  roster-limieten worden gerespecteerd.
+- **Doelkoersen** per renner instellen (ster in de editor).
+- **Belasting & conflicten**: koersdagen per renner, plus waarschuwingen bij dubbel
+  geboekte of te dicht op elkaar geplande renners.
+- **Onboarding-wizard** die je vanaf 1 januari door het seizoensbegin leidt.
 - **Opslaan** terug naar een game-leesbare `.cdb`.
 
 ## Structuur
@@ -39,6 +57,7 @@ pcmdb/               herbruikbare kern (engine + domeinmodel)
   calendar_gen.py    realistische, seed-gestuurde kalendergenerator voor AI-ploegen
   planner.py         seizoensprogramma-hulplaag
 server/app.py        lokale API + statische server (stdlib, nul runtime-deps)
+desktop.py           native desktop-launcher (pywebview) met bestandskeuze
 web/                 moderne SPA (index.html / style.css / app.js)
 cli.py               command-line inspectie & bewerking
 tests/               round-trip- + encoder-inverse-tests (zet PCM_CDB naar een career .cdb)

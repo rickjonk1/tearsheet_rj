@@ -22,6 +22,14 @@ CAREER = None
 CAREER_PATH = None
 
 
+def open_career(path):
+    """(Re)load a career .cdb into the module globals."""
+    global CAREER, CAREER_PATH
+    CAREER = Career.load(path)
+    CAREER_PATH = path
+    return CAREER
+
+
 def _team_summary():
     out = []
     for t in CAREER.teams.values():
@@ -37,16 +45,24 @@ def _team_summary():
     return out
 
 
-def _program(team_id):
+def _program(team_id, load=None):
     prog = CAREER.season_program(team_id)
+    # race -> set of riders with a scheduling conflict touching that race
+    conf_by_race = {}
+    if load:
+        for c in load["conflicts"]:
+            conf_by_race.setdefault(c["a"], set()).add(c["rider"])
+            conf_by_race.setdefault(c["b"], set()).add(c["rider"])
     for e in prog:
         objr = CAREER.objectives_for_race(e["race"])
         e["objectives"] = len(objr & set(e["roster"]))
+        cr = conf_by_race.get(e["race"], set())
+        e["warn"] = len(cr & set(e["roster"]))
         e["roster"] = [{"id": rid, "name": CAREER.rider_label(rid),
                         "ability": CAREER.riders[rid]["ability"] if rid in CAREER.riders else 0,
                         "specialty": CAREER.riders[rid]["specialty"] if rid in CAREER.riders else "",
                         "fit": CAREER.race_fit(rid, e["race"]),
-                        "obj": rid in objr} for rid in e["roster"]]
+                        "obj": rid in objr, "warn": rid in cr} for rid in e["roster"]]
     return prog
 
 
@@ -92,21 +108,39 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         q = parse_qs(u.query)
         if u.path == "/api/bootstrap":
+            if CAREER is None:
+                return self._send(200, {"path": None, "loaded": False,
+                                        "counts": {"riders": 0, "races": 0, "teams": 0}, "teams": []})
             return self._send(200, {
-                "path": CAREER_PATH,
+                "path": CAREER_PATH, "loaded": True,
                 "counts": {"riders": len(CAREER.riders), "races": len(CAREER.races),
                            "teams": sum(1 for t in CAREER.teams.values() if t["riders"])},
                 "teams": _team_summary(),
             })
         if u.path == "/api/team":
             tid = int(q.get("id", [0])[0])
+            load = CAREER.team_load(tid)
             return self._send(200, {"id": tid, "name": CAREER.teams[tid]["name"],
-                                    "program": _program(tid), "squad": _squad(tid)})
+                                    "program": _program(tid, load), "squad": _squad(tid)})
         if u.path == "/api/fit":
             tid = int(q.get("team", [0])[0])
             rid = int(q.get("race", [0])[0])
             fit = {r: CAREER.race_fit(r, rid) for r in CAREER.teams[tid]["riders"]}
-            return self._send(200, fit)
+            busy = sorted(CAREER.race_busy_riders(tid, rid))
+            return self._send(200, {"fit": fit, "busy": busy})
+        if u.path == "/api/load":
+            tid = int(q.get("team", [0])[0])
+            info = CAREER.team_load(tid)
+            rows = []
+            for rid in CAREER.teams[tid]["riders"]:
+                ld = info["load"].get(rid, {"racedays": 0, "races": 0, "conflicts": 0})
+                r = CAREER.riders[rid]
+                rows.append({"id": rid, "name": CAREER.rider_label(rid), "ability": r["ability"],
+                             "specialty": r["specialty"], "racedays": ld["racedays"],
+                             "races": ld["races"], "conflicts": ld["conflicts"],
+                             "objectives": len(CAREER.rider_objectives(rid))})
+            rows.sort(key=lambda x: x["racedays"], reverse=True)
+            return self._send(200, {"riders": rows, "conflicts": len(info["conflicts"])})
         return self._static(u.path)
 
     def do_POST(self):
@@ -137,6 +171,10 @@ class Handler(BaseHTTPRequestHandler):
         if u.path == "/api/objective":
             added = CAREER.toggle_objective(int(data["rider"]), int(data["race"]))
             return self._send(200, {"added": added})
+        if u.path == "/api/open":
+            open_career(data["path"])
+            return self._send(200, {"ok": True, "path": CAREER_PATH,
+                                    "teams": len(CAREER.teams)})
         if u.path == "/api/save":
             out = data.get("path") or CAREER_PATH
             CAREER.save(out)
@@ -144,18 +182,24 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(404, {"error": "unknown"})
 
 
+def build_server(port=8765):
+    """Create the HTTP server (used by both the CLI and the desktop launcher)."""
+    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+
+
 def main():
-    global CAREER, CAREER_PATH
     ap = argparse.ArgumentParser()
     ap.add_argument("career", nargs="?", default=os.environ.get("PCM_CDB", "career.cdb"))
     ap.add_argument("--port", type=int, default=8765)
     args = ap.parse_args()
-    CAREER_PATH = args.career
-    print(f"Loading {CAREER_PATH} ...")
-    CAREER = Career.load(CAREER_PATH)
-    print(f"  {len(CAREER.riders)} riders, {len(CAREER.races)} races, "
-          f"{sum(1 for t in CAREER.teams.values() if t['riders'])} teams")
-    srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    if os.path.isfile(args.career):
+        print(f"Loading {args.career} ...")
+        open_career(args.career)
+        print(f"  {len(CAREER.riders)} riders, {len(CAREER.races)} races, "
+              f"{sum(1 for t in CAREER.teams.values() if t['riders'])} teams")
+    else:
+        print(f"(no career loaded — open one via the UI)")
+    srv = build_server(args.port)
     print(f"PCM Planner running at http://127.0.0.1:{args.port}")
     srv.serve_forever()
 

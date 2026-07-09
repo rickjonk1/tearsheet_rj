@@ -191,6 +191,52 @@ class Career:
         out.sort(key=lambda e: (e["month"], e["day"]))
         return out
 
+    # ---- schedule / load / conflicts ----
+    def _race_range(self, race_id):
+        ra = self.races.get(race_id, {})
+        start = (ra.get("month", 0) - 1) * 31 + ra.get("day", 0)
+        return start, start + max(1, ra.get("stages", 1)) - 1, max(1, ra.get("stages", 1))
+
+    def team_load(self, team_id, rest_days=2):
+        """Per-rider race load + scheduling conflicts for a team's season."""
+        prog = self.season_program(team_id)
+        byrider = {}
+        for e in prog:
+            for rid in e["roster"]:
+                byrider.setdefault(rid, []).append(e["race"])
+        load, conflicts = {}, []
+        for rid, races in byrider.items():
+            rr = sorted(races, key=lambda r: self._race_range(r)[0])
+            days = sum(self._race_range(r)[2] for r in rr)
+            bad = set()
+            for i in range(len(rr) - 1):
+                a, b = rr[i], rr[i + 1]
+                sa, ea, _ = self._race_range(a)
+                sb, eb, _ = self._race_range(b)
+                if sb <= ea:
+                    conflicts.append({"rider": rid, "a": a, "b": b, "kind": "overlap"})
+                    bad.update((a, b))
+                elif sb - ea <= rest_days:
+                    conflicts.append({"rider": rid, "a": a, "b": b, "kind": "rest"})
+                    bad.update((a, b))
+            load[rid] = {"racedays": days, "races": len(rr), "conflicts": len(bad),
+                         "conflict_races": list(bad)}
+        return {"load": load, "conflicts": conflicts, "byrider": byrider}
+
+    def race_busy_riders(self, team_id, race_id):
+        """Riders whose other commitments overlap this race's dates."""
+        s0, e0, _ = self._race_range(race_id)
+        info = self.team_load(team_id)
+        busy = set()
+        for rid, races in info["byrider"].items():
+            for r in races:
+                if r == race_id:
+                    continue
+                s, e, _ = self._race_range(r)
+                if not (e0 < s or s0 > e):
+                    busy.add(rid); break
+        return busy
+
     def set_roster(self, row, rider_ids):
         tr = self.db["DYN_team_race"]
         col = tr.column("gene_ilist_roster")

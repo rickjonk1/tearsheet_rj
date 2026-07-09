@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Peloton — Season Planner</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,6 +23,8 @@
     </div>
     <div class="topmeta" id="topmeta"></div>
     <div class="topactions">
+      <button class="btn ghost" id="btnOpen" hidden>📂 Openen</button>
+      <button class="btn ghost" id="btnLoad">📊 Belasting</button>
       <button class="btn ghost" id="btnGenerate">✨ Realistische kalender</button>
       <button class="btn primary" id="btnSave">Opslaan</button>
     </div>
@@ -84,6 +87,17 @@
         <button class="btn gold" id="genAll">✨ Alle ploegen</button>
       </div>
       <div id="genResult" class="genresult"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="loadModal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Belasting & conflicten</h2>
+        <button class="iconbtn" id="loadClose">✕</button>
+      </div>
+      <p class="modal-sub" id="loadSummary"></p>
+      <div id="loadTable" class="loadtable"></div>
     </div>
   </div>
 
