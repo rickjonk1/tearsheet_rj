@@ -187,6 +187,42 @@ button{font-family:inherit;cursor:pointer}
 .genrow .gnm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .genrow .gl{color:var(--gold);font-weight:600}
 
+.btn.gold{background:linear-gradient(135deg,var(--gold),#f59e0b);border:none;color:#241800}
+.btn.gold:hover{box-shadow:0 6px 18px rgba(251,191,36,.35)}
+
+/* ---------- objective star ---------- */
+.objbtn{width:26px;height:26px;border:none;background:transparent;font-size:15px;line-height:1;
+  color:var(--mut2);cursor:pointer;transition:.12s}
+.objbtn:hover{color:var(--gold);transform:scale(1.15)}
+.objbtn.on{color:var(--gold)}
+.objtag{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--gold)}
+
+/* ---------- onboarding wizard ---------- */
+.wizard{position:fixed;inset:0;z-index:70;display:grid;place-items:center;
+  background:radial-gradient(900px 500px at 50% -10%,#16243a 0%,rgba(6,9,14,.94) 55%),rgba(6,9,14,.94)}
+.wiz-card{width:min(680px,94vw);background:var(--panel);border:1px solid var(--line2);
+  border-radius:22px;padding:34px;box-shadow:var(--shadow)}
+.wiz-steps{display:flex;gap:8px;margin-bottom:26px}
+.wiz-steps .s{flex:1;height:4px;border-radius:4px;background:var(--line)}
+.wiz-steps .s.on{background:linear-gradient(90deg,var(--grn),var(--gold))}
+.wiz-hero{text-align:center;padding:10px 0 6px}
+.wiz-kicker{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--grn);font-weight:700}
+.wiz-hero h1{font-size:32px;margin:12px 0 10px}
+.wiz-hero p{color:var(--mut);font-size:14px;line-height:1.6;max-width:460px;margin:0 auto}
+.wiz-teams{max-height:320px;overflow-y:auto;margin:18px 0;display:flex;flex-direction:column;gap:3px}
+.wiz-actions{display:flex;justify-content:space-between;align-items:center;margin-top:26px}
+.wiz-actions .spacer{flex:1}
+.wiz-picked{display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--line2);
+  border-radius:14px;padding:14px 16px;margin:20px 0}
+.wiz-picked .badge{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--gold),#f59e0b);color:#241800;font-weight:800}
+.wiz-genbox{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:22px;text-align:center;margin:18px 0}
+.wiz-genbox .big{font-size:40px;font-weight:800;color:var(--grn);font-variant-numeric:tabular-nums}
+.wiz-skip{background:transparent;border:none;color:var(--mut2);font-size:12.5px;cursor:pointer;text-decoration:underline}
+.spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--grn);
+  border-radius:50%;animation:spin .8s linear infinite;margin:6px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 /* ---------- toast ---------- */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel2);
   border:1px solid var(--line2);color:var(--txt);padding:12px 20px;border-radius:12px;

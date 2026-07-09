@@ -128,6 +128,35 @@ class Career:
             if c["fkIDteam"][i] in self.teams:
                 self.teams[c["fkIDteam"][i]]["riders"].append(rid)
 
+        # ---- objectives (rider -> target races) ----
+        co = db["DYN_cyclist_objective"]
+        self._obj_id = co.column("IDcyclist_objective")
+        self._obj_cyc = co.column("fkIDcyclist")
+        self._obj_race = co.column("fkIDrace")
+
+    def objectives_for_race(self, race_id):
+        return {self._obj_cyc[i] for i in range(len(self._obj_race)) if self._obj_race[i] == race_id}
+
+    def rider_objectives(self, rider_id):
+        return [self._obj_race[i] for i in range(len(self._obj_cyc)) if self._obj_cyc[i] == rider_id]
+
+    def toggle_objective(self, rider_id, race_id):
+        """Add/remove a rider's objective for a race; rebuilds DYN_cyclist_objective."""
+        ids, cyc, rac = self._obj_id, self._obj_cyc, self._obj_race
+        keep = [i for i in range(len(ids)) if not (cyc[i] == rider_id and rac[i] == race_id)]
+        if len(keep) == len(ids):                      # not present -> add
+            new_id = (max(ids) + 1) if ids else 1
+            ids.append(new_id); cyc.append(rider_id); rac.append(race_id)
+            added = True
+        else:                                          # present -> remove
+            ids[:] = [ids[i] for i in keep]
+            cyc[:] = [cyc[i] for i in keep]
+            rac[:] = [rac[i] for i in keep]
+            added = False
+        self.db["DYN_cyclist_objective"].set_data({
+            "IDcyclist_objective": ids, "fkIDcyclist": cyc, "fkIDrace": rac})
+        return added
+
     # ---- fit scoring ----
     def race_fit(self, rider_id, race_id):
         """0..100 how well a rider's profile matches a race's demands."""

@@ -40,10 +40,13 @@ def _team_summary():
 def _program(team_id):
     prog = CAREER.season_program(team_id)
     for e in prog:
+        objr = CAREER.objectives_for_race(e["race"])
+        e["objectives"] = len(objr & set(e["roster"]))
         e["roster"] = [{"id": rid, "name": CAREER.rider_label(rid),
                         "ability": CAREER.riders[rid]["ability"] if rid in CAREER.riders else 0,
                         "specialty": CAREER.riders[rid]["specialty"] if rid in CAREER.riders else "",
-                        "fit": CAREER.race_fit(rid, e["race"])} for rid in e["roster"]]
+                        "fit": CAREER.race_fit(rid, e["race"]),
+                        "obj": rid in objr} for rid in e["roster"]]
     return prog
 
 
@@ -124,6 +127,16 @@ class Handler(BaseHTTPRequestHandler):
             if data.get("apply"):
                 calendar_gen.apply(CAREER, gen)
             return self._send(200, {"planned": len(preview), "preview": preview})
+        if u.path == "/api/generate-all":
+            seed = int(data.get("seed", 1))
+            variety = float(data.get("variety", 0.15))
+            gen = calendar_gen.generate(CAREER, seed=seed, variety=variety)
+            changed = calendar_gen.apply(CAREER, gen)
+            teams = sum(1 for v in gen.values() if v)
+            return self._send(200, {"teams": teams, "rosters": changed})
+        if u.path == "/api/objective":
+            added = CAREER.toggle_objective(int(data["rider"]), int(data["race"]))
+            return self._send(200, {"added": added})
         if u.path == "/api/save":
             out = data.get("path") or CAREER_PATH
             CAREER.save(out)

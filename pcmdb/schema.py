@@ -121,6 +121,21 @@ class Table:
                 raise ValueError("string/list column %r has no blob chunk" % name)
             blob.raw = bbytes
 
+    def set_nrow(self, n):
+        """Change the row count (updates the ROW_COUNT chunk)."""
+        self.nrow = n
+        self.chunk.find(cdb.ROW_COUNT).raw = struct.pack("<I", n)
+
+    def set_data(self, columns):
+        """Replace the whole table body. `columns` maps every column name to a
+        list of values (all lists the same length -> the new row count)."""
+        lengths = {len(v) for v in columns.values()}
+        if len(lengths) != 1:
+            raise ValueError("all columns must have equal length")
+        self.set_nrow(lengths.pop())
+        for c in self.cols:
+            self.set_column(c.desc, columns[c.desc])
+
     def rows(self, limit=None):
         n = self.nrow if limit is None else min(limit, self.nrow)
         data = {c.desc: _decode_column(c, self.nrow) for c in self.cols}

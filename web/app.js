@@ -31,7 +31,7 @@ async function boot(){
     `<span><b>${b.counts.teams}</b> ploegen</span>`+
     `<span style="color:var(--mut2)">${(b.path||'').split('/').pop()}</span>`;
   renderTeams(state.teams);
-  if(state.teams.length) selectTeam(state.teams[0].id);
+  openWizard();
 }
 
 function renderTeams(list){
@@ -117,6 +117,7 @@ function raceCard(p){
       <div class="meta">
         <span class="jersey" style="color:${tt.c};background:${tt.bg}">${tt.l}</span>
         ${stars(p.popularity)}
+        ${p.objectives?`<span class="objtag">★ ${p.objectives} doel${p.objectives>1?'en':''}</span>`:''}
       </div>
     </div>
     <div class="right">
@@ -176,6 +177,7 @@ function estFit(s,p){ // client-side fallback (server gives fit for current rost
 function riderRow(r,p,inRoster,isLead){
   const row=el("div","rider"+(inRoster?"":" sug"));
   const fit=Math.round(r.fit||0);
+  const star = inRoster ? `<button class="objbtn ${r.obj?'on':''}" title="Doelkoers voor deze renner">${r.obj?'★':'☆'}</button>` : '';
   row.innerHTML=`
     <div class="rr-name">
       <div class="nm">${r.name} ${isLead?'<span class="leadtag">KOPMAN</span>':''}</div>
@@ -184,10 +186,18 @@ function riderRow(r,p,inRoster,isLead){
     <span class="abil">${r.ability}</span>
     <div class="fitwrap"><div class="fitbar"><i style="width:${Math.min(100,fit)}%"></i></div>
       <div class="fitval">${fit} fit</div></div>
+    ${star}
     <button class="rr-act ${inRoster?'rm':''}">${inRoster?'−':'+'}</button>`;
+  if(inRoster) row.querySelector(".objbtn").onclick=(e)=>{ e.stopPropagation(); toggleObjective(p,r); };
   row.querySelector(".rr-act").onclick=(e)=>{ e.stopPropagation();
     inRoster?removeRider(p,r.id):addRider(p,r.id); };
   return row;
+}
+
+async function toggleObjective(p,r){
+  const res=await api("/api/objective",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rider:r.id,race:p.race})});
+  r.obj=res.added; await refreshTeam(); toast(res.added?"Doelkoers ingesteld":"Doelkoers verwijderd");
 }
 
 async function commitRoster(p){
@@ -234,6 +244,94 @@ async function runGen(apply){
 }
 $("#genPreview").onclick=()=>runGen(false);
 $("#genApply").onclick=()=>runGen(true);
+$("#genAll").onclick=async()=>{
+  const seed=+$("#genSeed").value, variety=+$("#genVariety").value/100;
+  $("#genResult").innerHTML='<div class="skeleton">Heel het peloton plannen…</div>';
+  const r=await api("/api/generate-all",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({seed,variety})});
+  $("#genResult").innerHTML=`<div style="text-align:center;padding:10px">
+    <div style="font-size:34px;font-weight:800;color:var(--gold)">${r.rosters}</div>
+    <div style="color:var(--mut);font-size:12px">rosters gepland over ${r.teams} ploegen</div></div>`;
+  toast(`Peloton gepland: ${r.teams} ploegen`); refreshTeam();
+};
+
+/* ---------- onboarding wizard ---------- */
+const wiz={step:0, team:null};
+const WIZ_STEPS=4;
+function openWizard(){ wiz.step=0; wiz.team=null; $("#wizard").hidden=false; renderWizard(); }
+function closeWizard(){ $("#wizard").hidden=true; if(wiz.team!=null) selectTeam(wiz.team);
+  else if(state.teams.length) selectTeam(state.teams[0].id); }
+function renderWizard(){
+  $("#wizSteps").innerHTML=Array.from({length:WIZ_STEPS},(_,i)=>`<div class="s ${i<=wiz.step?'on':''}"></div>`).join("");
+  const body=$("#wizBody");
+  if(wiz.step===0){
+    body.innerHTML=`<div class="wiz-hero">
+      <div class="wiz-kicker">1 Januari · Seizoensstart</div>
+      <h1>Welkom bij je nieuwe seizoen</h1>
+      <p>We stellen samen een realistisch wielerseizoen samen — jouw ploeg én het hele peloton.
+         In een paar stappen sta je klaar aan de start.</p></div>
+      <div class="wiz-actions"><button class="wiz-skip" id="wizSkip">Overslaan</button>
+        <div class="spacer"></div><button class="btn primary" id="wizNext">Beginnen →</button></div>`;
+  }
+  else if(wiz.step===1){
+    body.innerHTML=`<div class="wiz-hero"><div class="wiz-kicker">Stap 1</div><h1>Kies je ploeg</h1>
+      <p>Welke ploeg ga jij dit seizoen managen?</p></div>
+      <input id="wizSearch" class="search" placeholder="Zoek ploeg…" autocomplete="off">
+      <div class="wiz-teams" id="wizTeams"></div>
+      <div class="wiz-actions"><button class="btn ghost" id="wizBack">← Terug</button>
+        <div class="spacer"></div><button class="btn primary" id="wizNext" ${wiz.team==null?'disabled style="opacity:.4"':''}>Verder →</button></div>`;
+    renderWizTeams(state.teams);
+    $("#wizSearch").oninput=e=>renderWizTeams(state.teams.filter(t=>t.name.toLowerCase().includes(e.target.value.toLowerCase())));
+  }
+  else if(wiz.step===2){
+    const tn=state.teams.find(t=>t.id===wiz.team);
+    body.innerHTML=`<div class="wiz-hero"><div class="wiz-kicker">Stap 2</div><h1>Realistisch peloton</h1>
+      <p>Genereer een dynamische kalender voor alle ploegen — gericht op de specialiteiten van
+         hun renners. Elk seizoen is anders.</p></div>
+      <div class="wiz-picked"><div class="badge">${tn?initials(tn.topRider):'?'}</div>
+        <div><div style="font-weight:650">${tn?tn.name:''}</div>
+        <div style="font-size:12px;color:var(--mut)">jouw ploeg</div></div></div>
+      <div class="wiz-genbox" id="wizGenBox">
+        <button class="btn gold" id="wizGen">✨ Genereer het seizoen (alle ploegen)</button>
+        <div style="font-size:12px;color:var(--mut2);margin-top:10px">Optioneel — je kunt ook zelf plannen.</div>
+      </div>
+      <div class="wiz-actions"><button class="btn ghost" id="wizBack">← Terug</button>
+        <div class="spacer"></div><button class="btn primary" id="wizNext">Verder →</button></div>`;
+    $("#wizGen").onclick=async()=>{
+      $("#wizGenBox").innerHTML='<div class="spinner"></div><div style="color:var(--mut);font-size:13px">Peloton plannen…</div>';
+      const r=await api("/api/generate-all",{method:"POST",headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({seed:7,variety:.15})});
+      $("#wizGenBox").innerHTML=`<div class="big">${r.rosters}</div>
+        <div style="color:var(--mut);font-size:13px">rosters gepland over ${r.teams} ploegen ✓</div>`;
+    };
+  }
+  else {
+    const tn=state.teams.find(t=>t.id===wiz.team);
+    body.innerHTML=`<div class="wiz-hero"><div class="wiz-kicker">Klaar</div><h1>Aan de start</h1>
+      <p>Je seizoen staat klaar. Open koersen op de kalender, stel selecties samen op basis van
+         fit, en markeer doelkoersen met een ster. Vergeet niet op te slaan.</p></div>
+      <div class="wiz-actions"><div class="spacer"></div>
+        <button class="btn primary" id="wizDone">Aan de slag met ${tn?tn.name:'je ploeg'} →</button></div>`;
+  }
+  wireWizard();
+}
+function renderWizTeams(list){
+  const box=$("#wizTeams"); box.innerHTML="";
+  list.slice(0,120).forEach(t=>{
+    const dc=t.avgAbility>=76?"#fbbf24":t.avgAbility>=73?"#37e08b":t.avgAbility>=68?"#5b9dff":"#8b95a9";
+    const row=el("div","teamrow"+(t.id===wiz.team?" active":""));
+    row.innerHTML=`<span class="dot" style="background:${dc}"></span><span class="tn">${t.name}</span><span class="tr">${t.avgAbility}</span>`;
+    row.onclick=()=>{ wiz.team=t.id; renderWizard(); };
+    box.appendChild(row);
+  });
+}
+function wireWizard(){
+  const nx=$("#wizNext"), bk=$("#wizBack"), sk=$("#wizSkip"), dn=$("#wizDone");
+  if(nx) nx.onclick=()=>{ if(wiz.step===1&&wiz.team==null)return; wiz.step++; renderWizard(); };
+  if(bk) bk.onclick=()=>{ wiz.step--; renderWizard(); };
+  if(sk) sk.onclick=closeWizard;
+  if(dn) dn.onclick=closeWizard;
+}
 
 /* ---------- save ---------- */
 $("#btnSave").onclick=async()=>{ const r=await api("/api/save",{method:"POST",

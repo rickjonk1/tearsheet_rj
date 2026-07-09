@@ -59,6 +59,13 @@
     </aside>
   </main>
 
+  <div class="wizard" id="wizard" hidden>
+    <div class="wiz-card">
+      <div class="wiz-steps" id="wizSteps"></div>
+      <div class="wiz-body" id="wizBody"></div>
+    </div>
+  </div>
+
   <div class="modal" id="genModal" hidden>
     <div class="modal-card">
       <div class="modal-head">
@@ -73,7 +80,8 @@
       </div>
       <div class="genactions">
         <button class="btn ghost" id="genPreview">Voorbeeld</button>
-        <button class="btn primary" id="genApply">Toepassen</button>
+        <button class="btn primary" id="genApply">Deze ploeg</button>
+        <button class="btn gold" id="genAll">✨ Alle ploegen</button>
       </div>
       <div id="genResult" class="genresult"></div>
     </div>
