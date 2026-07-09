@@ -171,6 +171,37 @@ class Handler(BaseHTTPRequestHandler):
             if data.get("apply"):
                 calendar_gen.apply(CAREER, gen)
             return self._send(200, {"planned": len(preview), "preview": preview})
+        if u.path == "/api/season-setup":
+            tid = int(data["team"])
+            seed = int(data.get("seed", 7))
+            roles = {tid: {"leaders": [int(x) for x in data.get("leaders", [])] or None,
+                           "coleaders": [int(x) for x in data.get("coleaders", [])] or None}}
+            gen = calendar_gen.generate(CAREER, seed=seed, teams=[tid], roles=roles)
+            res = gen[tid]
+            plan_by_race = {p["race"]: p for p in res["plan"]}
+            def sched(rid):
+                out = []
+                for r in res["objectives"].get(rid, []):
+                    ra = CAREER.races[r]
+                    out.append({"race": r, "name": ra["name"], "day": ra["day"],
+                                "month": ra["month"], "pop": ra["popularity"],
+                                "fit": CAREER.race_fit(rid, r)})
+                out.sort(key=lambda x: (x["month"], x["day"]))
+                return out
+            captains = []
+            for role, rids in (("Leider", res["roles"]["leaders"]),
+                               ("Co-leider", res["roles"]["coleaders"])):
+                for rid in rids:
+                    rr = CAREER.riders[rid]
+                    captains.append({"id": rid, "name": CAREER.rider_label(rid), "role": role,
+                                     "ability": rr["ability"], "specialty": rr["specialty"],
+                                     "races": sched(rid), "days": sum(max(1, CAREER.races[x["race"]]["stages"]) for x in sched(rid))})
+            if data.get("apply"):
+                calendar_gen.apply(CAREER, gen)
+            camps = CAREER.team_camps(tid)
+            return self._send(200, {"year": CAREER.season_year(), "captains": captains,
+                                    "planned": len(res["plan"]),
+                                    "domestiques": len(res["roles"]["domestiques"]), "camps": camps})
         if u.path == "/api/generate-all":
             seed = int(data.get("seed", 1))
             variety = float(data.get("variety", 0.15))

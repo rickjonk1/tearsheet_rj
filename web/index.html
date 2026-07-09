@@ -24,6 +24,7 @@
     <div class="topmeta" id="topmeta"></div>
     <div class="topactions">
       <button class="btn ghost" id="btnOpen" hidden>📂 Openen</button>
+      <button class="btn ghost" id="btnSetup">🗓 Seizoen opzetten</button>
       <button class="btn ghost" id="btnForm">🏔 Vorm &amp; Training</button>
       <button class="btn ghost" id="btnLoad">📊 Belasting</button>
       <button class="btn ghost" id="btnGenerate">✨ Kalender</button>
@@ -88,6 +89,34 @@
         <button class="btn gold" id="genAll">✨ Alle ploegen</button>
       </div>
       <div id="genResult" class="genresult"></div>
+    </div>
+  </div>
+
+  <div class="setup" id="setupModal" hidden>
+    <div class="setup-head">
+      <div>
+        <div class="setup-kicker" id="setupPhaseLabel">Stap 1 · Rollen</div>
+        <h2 id="setupTitle">Seizoen opzetten</h2>
+      </div>
+      <button class="iconbtn" id="setupClose">✕</button>
+    </div>
+    <div class="setup-body">
+      <div id="setupRoles">
+        <p class="modal-sub">Kies je kopmannen (max 3), dan je co-leiders. De rest wordt knecht.
+          Klik op een renner om zijn rol te wisselen. De planner bouwt hun schema op basis van
+          hun specialiteiten; knechten worden per koers gekozen op het routeprofiel.</p>
+        <div class="rolelegend">
+          <span><i class="rl leader"></i> Kopman</span>
+          <span><i class="rl co"></i> Co-leider</span>
+          <span><i class="rl dom"></i> Knecht</span>
+        </div>
+        <div id="roleList" class="rolelist"></div>
+      </div>
+      <div id="setupPlanner" hidden></div>
+    </div>
+    <div class="setup-foot">
+      <div id="setupInfo" class="setup-info"></div>
+      <div class="setup-actions" id="setupActions"></div>
     </div>
   </div>
 

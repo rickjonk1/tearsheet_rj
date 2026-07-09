@@ -223,6 +223,61 @@ button{font-family:inherit;cursor:pointer}
   border-radius:50%;animation:spin .8s linear infinite;margin:6px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ---------- seizoen opzetten (roles + horizontal planner) ---------- */
+.setup{position:fixed;inset:0;z-index:65;background:var(--bg);display:flex;flex-direction:column}
+.setup-head{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;
+  border-bottom:1px solid var(--line);background:var(--bg2)}
+.setup-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--grn);font-weight:700}
+.setup-head h2{font-size:20px;margin-top:3px}
+.setup-body{flex:1;overflow:auto;padding:24px 28px}
+.setup-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 28px;border-top:1px solid var(--line);background:var(--bg2)}
+.setup-info{color:var(--mut);font-size:13px}
+.setup-actions{display:flex;gap:10px}
+
+.rolelegend{display:flex;gap:18px;margin:6px 0 16px;font-size:12px;color:var(--mut)}
+.rolelegend i.rl{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.rl.leader{background:var(--gold)} .rl.co{background:var(--grn)} .rl.dom{background:var(--mut2)}
+.rolelist{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.rolecard{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;
+  border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:.12s;border-left-width:4px}
+.rolecard:hover{border-color:var(--line2)}
+.rolecard.leader{border-left-color:var(--gold)}
+.rolecard.co{border-left-color:var(--grn)}
+.rolecard.dom{border-left-color:var(--mut2);opacity:.72}
+.rolecard .rc-name{flex:1;min-width:0}
+.rolecard .rc-name .n{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rolecard .rc-name .s{font-size:11px;color:var(--mut)}
+.rolecard .rc-abil{font-size:12px;font-weight:700;background:var(--panel2);padding:2px 7px;border-radius:6px}
+.rolecard .rc-badge{font-size:9px;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:5px}
+.rolecard.leader .rc-badge{color:var(--gold);border:1px solid rgba(251,191,36,.4)}
+.rolecard.co .rc-badge{color:var(--grn);border:1px solid rgba(55,224,139,.4)}
+.rolecard.dom .rc-badge{color:var(--mut2);border:1px solid var(--line2)}
+
+/* horizontal year planner */
+.planner{min-width:920px}
+.planner-months{display:grid;grid-template-columns:180px repeat(12,1fr);gap:0;
+  position:sticky;top:0;background:var(--bg);z-index:2;border-bottom:1px solid var(--line2)}
+.planner-months .mh{font-size:10.5px;font-weight:700;color:var(--mut2);text-transform:uppercase;
+  letter-spacing:.05em;padding:8px 4px;text-align:center;border-left:1px solid var(--line)}
+.planner-months .mh.corner{text-align:left;border-left:none}
+.planrow{display:grid;grid-template-columns:180px repeat(12,1fr);gap:0;border-bottom:1px solid var(--line);
+  min-height:56px;align-items:stretch}
+.planrow .cap{padding:8px 10px;display:flex;flex-direction:column;justify-content:center;
+  border-right:1px solid var(--line2);position:sticky;left:0;background:var(--bg2);z-index:1}
+.planrow .cap .cn{font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.planrow .cap .cmeta{font-size:10.5px;color:var(--mut);margin-top:2px}
+.planrow .cap .rolechip{font-size:8.5px;font-weight:800;padding:1px 5px;border-radius:4px;align-self:flex-start;margin-top:3px}
+.planrow.leader .rolechip{color:var(--gold);border:1px solid rgba(251,191,36,.4)}
+.planrow.co .rolechip{color:var(--grn);border:1px solid rgba(55,224,139,.4)}
+.mcell{border-left:1px solid var(--line);padding:4px 3px;display:flex;flex-direction:column;gap:3px;position:relative}
+.rchip{font-size:9.5px;font-weight:600;padding:2px 5px;border-radius:5px;line-height:1.15;
+  background:var(--panel2);border:1px solid var(--line2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rchip.big{background:rgba(251,191,36,.14);border-color:rgba(251,191,36,.4);color:#f5d67a}
+.rchip.camp{background:rgba(91,157,255,.15);border-color:rgba(91,157,255,.45);color:#a9cbff}
+.planlegend{display:flex;gap:16px;margin-bottom:12px;font-size:11.5px;color:var(--mut)}
+.planlegend i{display:inline-block;width:16px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+
 /* ---------- vorm & training ---------- */
 .modal-card.wide{width:min(760px,95vw)}
 .tabs{display:flex;gap:6px;margin:4px 0 16px;border-bottom:1px solid var(--line)}
