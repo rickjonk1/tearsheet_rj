@@ -193,15 +193,29 @@ class Handler(BaseHTTPRequestHandler):
                                ("Co-leider", res["roles"]["coleaders"])):
                 for rid in rids:
                     rr = CAREER.riders[rid]
+                    s = sched(rid)
+                    gate = 0.90 if role == "Leider" else 0.83
                     captains.append({"id": rid, "name": CAREER.rider_label(rid), "role": role,
                                      "ability": rr["ability"], "specialty": rr["specialty"],
-                                     "races": sched(rid), "days": sum(max(1, CAREER.races[x["race"]]["stages"]) for x in sched(rid))})
+                                     "races": s, "candidates": calendar_gen.candidates_for(CAREER, tid, rid, gate),
+                                     "days": sum(max(1, CAREER.races[x["race"]]["stages"]) for x in s)})
             if data.get("apply"):
                 calendar_gen.apply(CAREER, gen)
             camps = CAREER.team_camps(tid)
             return self._send(200, {"year": CAREER.season_year(), "captains": captains,
                                     "planned": len(res["plan"]),
                                     "domestiques": len(res["roles"]["domestiques"]), "camps": camps})
+        if u.path == "/api/season-apply":
+            tid = int(data["team"])
+            roles = {"leaders": [int(x) for x in data.get("leaders", [])] or None,
+                     "coleaders": [int(x) for x in data.get("coleaders", [])] or None}
+            captain_races = {int(k): [int(x) for x in v] for k, v in data.get("captains", {}).items()}
+            res = calendar_gen.build_from_captains(CAREER, tid, captain_races, roles=roles,
+                                                   seed=int(data.get("seed", 7)))
+            changed = calendar_gen.apply(CAREER, {tid: res})
+            if data.get("save"):
+                CAREER.save()
+            return self._send(200, {"ok": True, "rosters": changed, "planned": len(res["plan"])})
         if u.path == "/api/generate-all":
             seed = int(data.get("seed", 1))
             variety = float(data.get("variety", 0.15))

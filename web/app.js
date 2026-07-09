@@ -316,52 +316,79 @@ function cycleRole(id){
   else setup.roles[id]=next;
   renderRoles();
 }
-async function buildSeason(apply){
-  const leaders=Object.keys(setup.roles).filter(k=>setup.roles[k]==='leader').map(Number);
-  const coleaders=Object.keys(setup.roles).filter(k=>setup.roles[k]==='co').map(Number);
+function setupRoleArrays(){
+  return {leaders:Object.keys(setup.roles).filter(k=>setup.roles[k]==='leader').map(Number),
+          coleaders:Object.keys(setup.roles).filter(k=>setup.roles[k]==='co').map(Number)};
+}
+async function buildSeason(){
+  const {leaders,coleaders}=setupRoleArrays();
   $("#setupActions").innerHTML=`<span style="color:var(--mut)">Bezig…</span>`;
   const d=await api("/api/season-setup",{method:"POST",headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({team:state.teamId,leaders,coleaders,seed:7,apply:apply===true})});
+    body:JSON.stringify({team:state.teamId,leaders,coleaders,seed:7})});
   setup.data=d;
-  if(apply===true){ $("#setupModal").hidden=true; toast("Seizoen toegepast & rosters gevuld"); refreshTeam(); return; }
+  // client-editable per-captain race selection, seeded from the engine
+  setup.captainRaces={};
+  d.captains.forEach(c=>setup.captainRaces[c.id]=new Set(c.races.map(r=>r.race)));
   setup.phase=2; renderSetup();
 }
 const MON3B=["","JAN","FEB","MRT","APR","MEI","JUN","JUL","AUG","SEP","OKT","NOV","DEC"];
+function captainDays(c){
+  const sel=setup.captainRaces[c.id];
+  return c.candidates.filter(r=>sel.has(r.race)).reduce((a,r)=>a+1,0);
+}
 function renderPlanner(){
-  $("#setupPhaseLabel").textContent="Stap 2 · Horizontale jaarplanner";
+  $("#setupPhaseLabel").textContent="Stap 2 · Horizontale jaarplanner — klik koersen aan/uit";
   $("#setupRoles").hidden=true; const box=$("#setupPlanner"); box.hidden=false;
   const d=setup.data;
-  let html=`<div class="planlegend"><span><i class="rchip big" style="display:inline-block"></i> Grote koers</span>
-    <span><i class="rchip camp" style="display:inline-block"></i> Trainingskamp</span>
-    <span>Kolommen = maanden · rijen = kopmannen/co-leiders</span></div>`;
+  let html=`<div class="planlegend">
+    <span><i class="rchip big" style="display:inline-block"></i> Grote doelkoers</span>
+    <span><i class="rchip" style="display:inline-block"></i> Gekozen koers</span>
+    <span><i class="rchip ghost" style="display:inline-block"></i> Beschikbaar (klik om toe te voegen)</span>
+    <span><i class="rchip camp" style="display:inline-block"></i> Trainingskamp</span></div>`;
   html+=`<div class="planner"><div class="planner-months"><div class="mh corner">Renner</div>`;
   for(let m=1;m<=12;m++) html+=`<div class="mh">${MON3B[m]}</div>`;
   html+=`</div>`;
   d.captains.forEach(c=>{
     const cls=c.role==='Leider'?'leader':'co';
+    const sel=setup.captainRaces[c.id];
+    const nsel=c.candidates.filter(r=>sel.has(r.race)).length;
     html+=`<div class="planrow ${cls}"><div class="cap"><div class="cn">${c.name}</div>
-      <div class="cmeta">${c.specialty} · ${c.days} dagen</div><span class="rolechip">${c.role.toUpperCase()}</span></div>`;
-    const byMonth={}; c.races.forEach(r=>(byMonth[r.month]=byMonth[r.month]||[]).push(r));
+      <div class="cmeta">${c.specialty} · <b>${nsel}</b> koersen</div><span class="rolechip">${c.role.toUpperCase()}</span></div>`;
+    const byMonth={}; c.candidates.forEach(r=>(byMonth[r.month]=byMonth[r.month]||[]).push(r));
     for(let m=1;m<=12;m++){
       html+=`<div class="mcell">`;
-      (byMonth[m]||[]).forEach(r=>{
-        html+=`<span class="rchip ${r.pop>=70?'big':''}" title="${r.name} (fit ${Math.round(r.fit)})">${String(r.day).padStart(2,'0')} ${r.name.slice(0,16)}</span>`;
+      (byMonth[m]||[]).sort((a,b)=>a.day-b.day).forEach(r=>{
+        const on=sel.has(r.race);
+        const klass=on?(r.pop>=70?'big':''):'ghost';
+        html+=`<span class="rchip ${klass}" data-cap="${c.id}" data-race="${r.race}" title="${r.name} · fit ${Math.round(r.fit)}${on?'':' — klik om toe te voegen'}">${String(r.day).padStart(2,'0')} ${r.name.slice(0,15)}</span>`;
       });
-      // camps overlapping this month
-      (d.camps||[]).forEach(cp=>{ const sm=+String(cp.start).slice(4,6);
-        if(sm===m) html+=`<span class="rchip camp" title="Trainingskamp ${cp.place}">🏔 ${cp.place.slice(0,12)}</span>`; });
+      (d.camps||[]).forEach(cp=>{ if(+String(cp.start).slice(4,6)===m)
+        html+=`<span class="rchip camp" title="Trainingskamp ${cp.place}">🏔 ${cp.place.slice(0,12)}</span>`; });
       html+=`</div>`;
     }
     html+=`</div>`;
   });
   html+=`</div>`;
   box.innerHTML=html;
-  $("#setupInfo").innerHTML=`<b>${d.planned}</b> koersen gepland · <b>${d.captains.length}</b> kopmannen/co-leiders · <b>${d.domestiques}</b> knechten (auto, op routeprofiel)`;
+  box.querySelectorAll(".rchip[data-race]").forEach(ch=>ch.onclick=()=>{
+    const cap=+ch.dataset.cap, race=+ch.dataset.race, sel=setup.captainRaces[cap];
+    sel.has(race)?sel.delete(race):sel.add(race); renderPlanner();
+  });
+  const total=d.captains.reduce((a,c)=>a+c.candidates.filter(r=>setup.captainRaces[c.id].has(r.race)).length,0);
+  $("#setupInfo").innerHTML=`<b>${total}</b> doelkoersen voor kopmannen/co-leiders · knechten worden auto op routeprofiel aangevuld`;
   $("#setupActions").innerHTML=`<button class="btn ghost" id="setupBack">← Rollen</button>
     <button class="btn primary" id="setupApply">Toepassen &amp; opslaan in career</button>`;
   $("#setupBack").onclick=()=>{ setup.phase=1; renderSetup(); };
-  $("#setupApply").onclick=async()=>{ await buildSeason(true); await api("/api/save",{method:"POST",
-    headers:{'Content-Type':'application/json'},body:JSON.stringify({})}); toast("Opgeslagen naar .cdb"); };
+  $("#setupApply").onclick=applySeason;
+}
+async function applySeason(){
+  const {leaders,coleaders}=setupRoleArrays();
+  const captains={};
+  Object.keys(setup.captainRaces).forEach(id=>captains[id]=[...setup.captainRaces[id]]);
+  $("#setupActions").innerHTML=`<span style="color:var(--mut)">Opslaan…</span>`;
+  const r=await api("/api/season-apply",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({team:state.teamId,leaders,coleaders,captains,save:true})});
+  $("#setupModal").hidden=true; toast(`Seizoen opgeslagen · ${r.rosters} rosters`); refreshTeam();
 }
 
 /* ---------- vorm & training ---------- */

@@ -275,6 +275,10 @@ button{font-family:inherit;cursor:pointer}
   background:var(--panel2);border:1px solid var(--line2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rchip.big{background:rgba(251,191,36,.14);border-color:rgba(251,191,36,.4);color:#f5d67a}
 .rchip.camp{background:rgba(91,157,255,.15);border-color:rgba(91,157,255,.45);color:#a9cbff}
+.rchip[data-race]{cursor:pointer}
+.rchip[data-race]:hover{border-color:var(--grn)}
+.rchip.ghost{background:transparent;border-style:dashed;border-color:var(--line);color:var(--mut2)}
+.rchip.ghost:hover{color:var(--txt);border-color:var(--grn)}
 .planlegend{display:flex;gap:16px;margin-bottom:12px;font-size:11.5px;color:var(--mut)}
 .planlegend i{display:inline-block;width:16px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
 

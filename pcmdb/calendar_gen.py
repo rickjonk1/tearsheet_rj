@@ -116,48 +116,104 @@ def generate(career: Career, seed=1, teams=None, variety=0.12, rest_days=2,
                     objectives.setdefault(cap, []).append(r["id"])
 
         # --- pass 2: fill helpers by route fit ---
-        # races to field: everything a captain wants + big races (so the team still shows up)
-        field = set(captains_of)
-        for r in races:
-            if r["popularity"] >= wt_prestige:
-                field.add(r["id"])
-        plan = []
-        for rid_ in sorted(field, key=lambda x: _daynum(race_by_id[x]["day"], race_by_id[x]["month"])):
-            r = race_by_id[rid_]
-            days = max(1, r["stages"])
-            s = _daynum(r["day"], r["month"]); e = s + days - 1
-            lo, hi = career.class_limits.get(r["klass"], (6, 7))
-            caps = list(captains_of.get(rid_, []))
-            roster = list(caps)
-            # candidate helpers: domestiques (and spare co-leaders) available, by ROUTE fit
-            cand = []
-            for rid2 in pool:
-                if rid2 in roster:
-                    continue
-                if spent[rid2] + days > (leader_budget if rid2 in leaders else dom_budget):
-                    continue
-                if _overlaps(busy[rid2], s, e, rest_days):
-                    continue
-                fit = career.race_fit(rid2, rid_)
-                cand.append(((fit + career.riders[rid2]["ability"] * 0.3) * rng.jitter(variety), fit, rid2))
-            cand.sort(reverse=True)
-            for _, _, rid2 in cand:
-                if len(roster) >= hi:
-                    break
-                roster.append(rid2)
-            if len(roster) < lo:
-                continue
-            for rid2 in roster:
-                if (s, e) not in busy[rid2]:
-                    busy[rid2].append((s, e)); spent[rid2] += days
-            leader = caps[0] if caps else max(
-                roster, key=lambda x: career.riders[x]["ability"])
-            plan.append({"race": rid_, "name": r["name"], "day": r["day"], "month": r["month"],
-                         "roster": roster, "leader": leader, "captains": caps})
-        plan.sort(key=lambda p: _daynum(p["day"], p["month"]))
+        plan = _fill_helpers(career, pool, races, race_by_id, leaders, captains_of,
+                             busy, spent, rng, rest_days, leader_budget, dom_budget, wt_prestige)
         result[tid] = {"plan": plan, "objectives": objectives,
                        "roles": {"leaders": leaders, "coleaders": coleaders, "domestiques": doms}}
     return result
+
+
+def _fill_helpers(career, pool, races, race_by_id, leaders, captains_of, busy, spent,
+                  rng, rest_days, leader_budget, dom_budget, wt_prestige):
+    """Fill every captained (and big) race to roster size with route-fit domestiques."""
+    field = set(captains_of)
+    for r in races:
+        if r["popularity"] >= wt_prestige:
+            field.add(r["id"])
+    plan = []
+    for rid_ in sorted(field, key=lambda x: _daynum(race_by_id[x]["day"], race_by_id[x]["month"])):
+        r = race_by_id[rid_]
+        days = max(1, r["stages"])
+        s = _daynum(r["day"], r["month"]); e = s + days - 1
+        lo, hi = career.class_limits.get(r["klass"], (6, 7))
+        caps = list(captains_of.get(rid_, []))
+        roster = list(caps)
+        cand = []
+        for rid2 in pool:
+            if rid2 in roster:
+                continue
+            if spent[rid2] + days > (leader_budget if rid2 in leaders else dom_budget):
+                continue
+            if _overlaps(busy[rid2], s, e, rest_days):
+                continue
+            fit = career.race_fit(rid2, rid_)
+            cand.append(((fit + career.riders[rid2]["ability"] * 0.3) * rng.jitter(0.08), fit, rid2))
+        cand.sort(reverse=True)
+        for _, _, rid2 in cand:
+            if len(roster) >= hi:
+                break
+            roster.append(rid2)
+        if len(roster) < lo:
+            continue
+        for rid2 in roster:
+            if (s, e) not in busy[rid2]:
+                busy[rid2].append((s, e)); spent[rid2] += days
+        leader = caps[0] if caps else max(roster, key=lambda x: career.riders[x]["ability"])
+        plan.append({"race": rid_, "name": r["name"], "day": r["day"], "month": r["month"],
+                     "roster": roster, "leader": leader, "captains": caps})
+    plan.sort(key=lambda p: _daynum(p["day"], p["month"]))
+    return plan
+
+
+def candidates_for(career: Career, team_id, rider_id, gate_frac=0.85):
+    """Races (of the team's invited calendar) that FIT a rider's profile — the pool a
+    captain can pick from on the planner. Returns list sorted by date."""
+    races = [r for r in career.races.values() if r["day"] and team_id in r["teams"]]
+    best = _best_fit(career, rider_id, races)
+    gate = best * gate_frac
+    out = []
+    for r in races:
+        fit = career.race_fit(rider_id, r["id"])
+        if fit >= gate:
+            out.append({"race": r["id"], "name": r["name"], "day": r["day"], "month": r["month"],
+                        "pop": r["popularity"], "fit": round(fit, 1)})
+    out.sort(key=lambda x: (x["month"], x["day"]))
+    return out
+
+
+def build_from_captains(career: Career, team_id, captain_races, roles=None, seed=1,
+                        rest_days=2, leader_budget=62, dom_budget=85, wt_prestige=45):
+    """Build a plan from an EXPLICIT per-captain race selection (the edited timeline).
+
+    captain_races: {rider_id: [race_id, ...]}. Fills helpers by route fit around it.
+    Returns {"plan":[...], "objectives":{...}, "roles":{...}}.
+    """
+    rng = _Rng(seed)
+    pool = career.teams[team_id]["riders"]
+    rr = roles or {}
+    leaders, coleaders, doms = assign_roles(career, team_id, rr.get("leaders"), rr.get("coleaders"))
+    races = [r for r in career.races.values() if r["day"] and team_id in r["teams"]]
+    race_by_id = {r["id"]: r for r in races}
+    busy = {rid: [] for rid in pool}
+    spent = {rid: 0 for rid in pool}
+    captains_of, objectives = {}, {}
+    # seat captains on their chosen races (chronologically, skipping overlaps)
+    for cap, rlist in captain_races.items():
+        cap = int(cap)
+        for rid_ in sorted(rlist, key=lambda x: _daynum(race_by_id[x]["day"], race_by_id[x]["month"]) if x in race_by_id else 0):
+            if rid_ not in race_by_id:
+                continue
+            r = race_by_id[rid_]; days = max(1, r["stages"])
+            s = _daynum(r["day"], r["month"]); e = s + days - 1
+            if _overlaps(busy[cap], s, e, rest_days):
+                continue
+            busy[cap].append((s, e)); spent[cap] += days
+            captains_of.setdefault(rid_, []).append(cap)
+            objectives.setdefault(cap, []).append(rid_)
+    plan = _fill_helpers(career, pool, races, race_by_id, leaders, captains_of,
+                         busy, spent, rng, rest_days, leader_budget, dom_budget, wt_prestige)
+    return {"plan": plan, "objectives": objectives,
+            "roles": {"leaders": leaders, "coleaders": coleaders, "domestiques": doms}}
 
 
 def apply(career: Career, generated, objectives=True):
