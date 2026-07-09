@@ -108,18 +108,28 @@ class Table:
         raise KeyError(name)
 
     def set_column(self, name, values):
-        """Write a full column back into the chunk tree (in place)."""
+        """Write a full column back into the chunk tree (in place).
+
+        Creates the COLUMN_VALUES / COLUMN_BLOB leaf chunks if they are absent —
+        a column with no list/string data yet (e.g. empty rosters in a pre-season
+        save) stores no blob chunk, so writing data into it must add one. Canonical
+        child order is COLUMN_INDEX, COLUMN_DATA_TYPE, COLUMN_VALUES, COLUMN_BLOB."""
         if len(values) != self.nrow:
             raise ValueError("expected %d values, got %d" % (self.nrow, len(values)))
         col = next(c for c in self.cols if c.desc == name)
         dtype = self.coltype(col)
         vbytes, bbytes = _encode_column(dtype, values)
-        col.find(cdb.COLUMN_VALUES).raw = vbytes
-        blob = col.find(cdb.COLUMN_BLOB)
+
+        vchunk = col.find(cdb.COLUMN_VALUES)
+        if vchunk is None:
+            vchunk = cdb.Chunk(cdb.COLUMN_VALUES); col.children.append(vchunk)
+        vchunk.raw = vbytes
+
         if bbytes is not None:
-            if blob is None:
-                raise ValueError("string/list column %r has no blob chunk" % name)
-            blob.raw = bbytes
+            bchunk = col.find(cdb.COLUMN_BLOB)
+            if bchunk is None:
+                bchunk = cdb.Chunk(cdb.COLUMN_BLOB); col.children.append(bchunk)
+            bchunk.raw = bbytes
 
     def set_nrow(self, n):
         """Change the row count (updates the ROW_COUNT chunk)."""

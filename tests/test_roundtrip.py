@@ -43,6 +43,25 @@ def test_column_encode_is_inverse_of_decode():
     assert cdb.dump_payload(root) == payload
 
 
+def test_list_column_without_blob_chunk_can_be_written(tmp_path):
+    """A list/string column with no data yet stores no COLUMN_BLOB chunk; writing
+    data into it must create one (regression: pre-season saves with empty rosters)."""
+    import struct
+    root = cdb.load_payload(_payload())
+    db = Database(root)
+    tr = db["DYN_team_race"]
+    col = next(c for c in tr.cols if c.desc == "gene_ilist_roster")
+    col.find(cdb.COLUMN_VALUES).raw = struct.pack("<%dI" % tr.nrow, *([0] * tr.nrow))
+    col.children = [ch for ch in col.children if ch.type != cdb.COLUMN_BLOB]
+    assert col.find(cdb.COLUMN_BLOB) is None
+
+    tr.set_column("gene_ilist_roster", [[101, 202, 303]] + [[]] * (tr.nrow - 1))
+    out = tmp_path / "t.cdb"
+    cdb.save(str(out), root)
+    got = Database(cdb.load(str(out))[0])["DYN_team_race"].column("gene_ilist_roster")
+    assert got[0] == [101, 202, 303] and got[1] == []
+
+
 def test_edit_persists_through_save_load(tmp_path):
     root = cdb.load_payload(_payload())
     db = Database(root)
