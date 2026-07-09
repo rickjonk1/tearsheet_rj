@@ -128,6 +128,15 @@ class Handler(BaseHTTPRequestHandler):
             fit = {r: CAREER.race_fit(r, rid) for r in CAREER.teams[tid]["riders"]}
             busy = sorted(CAREER.race_busy_riders(tid, rid))
             return self._send(200, {"fit": fit, "busy": busy})
+        if u.path == "/api/form":
+            tid = int(q.get("team", [0])[0])
+            return self._send(200, {"year": CAREER.season_year(), "riders": CAREER.team_form(tid)})
+        if u.path == "/api/camps":
+            month = q.get("month")
+            camps = CAREER.camps(int(month[0]) if month else None)
+            tid = q.get("team")
+            booked = CAREER.team_camps(int(tid[0])) if tid else []
+            return self._send(200, {"year": CAREER.season_year(), "camps": camps, "booked": booked})
         if u.path == "/api/load":
             tid = int(q.get("team", [0])[0])
             info = CAREER.team_load(tid)
@@ -171,6 +180,22 @@ class Handler(BaseHTTPRequestHandler):
         if u.path == "/api/objective":
             added = CAREER.toggle_objective(int(data["rider"]), int(data["race"]))
             return self._send(200, {"added": added})
+        if u.path == "/api/form":
+            CAREER.set_form(int(data["rider"]), data["fields"])
+            return self._send(200, {"ok": True})
+        if u.path == "/api/form-bulk":
+            tid = int(data["team"])
+            action = data.get("action")
+            for r in CAREER.team_form(tid):
+                if action == "fresh":
+                    CAREER.set_form(r["id"], {"freshness": 100.0, "fatigue": 0.0})
+                elif action == "peak":
+                    CAREER.set_form(r["id"], {"freshness": 100.0, "fatigue": 0.0, "fit": 99.0, "prepa": 99.0})
+            return self._send(200, {"ok": True, "count": len(CAREER.team_form(tid))})
+        if u.path == "/api/book-camp":
+            nid = CAREER.book_camp(int(data["team"]), int(data["stage"]),
+                                   int(data["start"]), int(data["end"]))
+            return self._send(200, {"ok": True, "id": nid})
         if u.path == "/api/open":
             open_career(data["path"])
             return self._send(200, {"ok": True, "path": CAREER_PATH,

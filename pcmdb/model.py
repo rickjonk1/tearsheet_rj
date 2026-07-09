@@ -243,5 +243,101 @@ class Career:
         col[row] = list(rider_ids)
         tr.set_column("gene_ilist_roster", col)
 
+    # ---- season year (derived, works for any career year incl. 2040) ----
+    def season_year(self):
+        if getattr(self, "_year", None) is None:
+            cd = self.db["STA_stage"].column("gene_i_computed_date")
+            years = [c // 10000 for c in cd if c > 10000000]
+            self._year = max(set(years), key=years.count) if years else 2026
+        return self._year
+
+    # ---- form / fitness (DYN_cyclist_fitness — the fatigue system) ----
+    FIT_FIELDS = {"fit": "value_f_FIT", "fatigue": "value_f_fat_phy",
+                  "freshness": "value_f_freshness", "prepa": "value_f_prepa",
+                  "peak": "peak_value"}
+
+    def _fitness_index(self):
+        if getattr(self, "_fit_idx", None) is None:
+            ids = self.db["DYN_cyclist_fitness"].column("IDcyclist")
+            self._fit_idx = {ids[i]: i for i in range(len(ids))}
+        return self._fit_idx
+
+    def team_form(self, team_id):
+        t = self.db["DYN_cyclist_fitness"]
+        idx = self._fitness_index()
+        cols = {k: t.column(v) for k, v in self.FIT_FIELDS.items()}
+        out = []
+        for rid in self.teams[team_id]["riders"]:
+            i = idx.get(rid)
+            if i is None:
+                continue
+            r = self.riders[rid]
+            out.append({"id": rid, "name": self.rider_label(rid), "ability": r["ability"],
+                        "specialty": r["specialty"],
+                        **{k: round(cols[k][i], 1) for k in self.FIT_FIELDS}})
+        out.sort(key=lambda x: x["ability"], reverse=True)
+        return out
+
+    def set_form(self, rider_id, fields):
+        t = self.db["DYN_cyclist_fitness"]
+        i = self._fitness_index().get(rider_id)
+        if i is None:
+            raise KeyError("no fitness row for rider %d" % rider_id)
+        for k, v in fields.items():
+            col_name = self.FIT_FIELDS.get(k)
+            if not col_name:
+                continue
+            vals = t.column(col_name)
+            vals[i] = float(v)
+            t.set_column(col_name, vals)
+
+    # ---- training camps (STA_training_stages / DYN_training_stage_booking) ----
+    def camps(self, month=None):
+        t = self.db["STA_training_stages"]
+        cols = {c: t.column(c) for c in ["IDtraining_stage", "gene_sz_place", "gene_i_stars",
+                "fkIDtype_stage", "gene_i_opening_month", "gene_i_closing_month"]}
+        out = []
+        for i in range(t.nrow):
+            om, cm = cols["gene_i_opening_month"][i], cols["gene_i_closing_month"][i]
+            if month is not None and not (om <= month <= cm):
+                continue
+            out.append({"id": cols["IDtraining_stage"][i], "place": cols["gene_sz_place"][i],
+                        "stars": cols["gene_i_stars"][i], "type": cols["fkIDtype_stage"][i],
+                        "open": om, "close": cm,
+                        "altitude": cols["fkIDtype_stage"][i] == 9})
+        out.sort(key=lambda c: (-c["stars"], c["place"]))
+        return out
+
+    def team_camps(self, team_id):
+        t = self.db["DYN_training_stage_booking"]
+        if t.nrow == 0:
+            return []
+        cols = {c: t.column(c) for c in t.colnames}
+        camp_name = {c["id"]: c["place"] for c in self.camps()}
+        out = []
+        for i in range(t.nrow):
+            if cols["fkIDteam"][i] != team_id:
+                continue
+            out.append({"row": i, "stage": cols["fkIDtraining_stage"][i],
+                        "place": camp_name.get(cols["fkIDtraining_stage"][i], "?"),
+                        "start": cols["gene_i_start_date"][i], "end": cols["gene_i_end_date"][i]})
+        return out
+
+    def book_camp(self, team_id, stage_id, start_yyyymmdd, end_yyyymmdd, efficacite=None):
+        """Append a booking row to DYN_training_stage_booking."""
+        t = self.db["DYN_training_stage_booking"]
+        data = {c: t.column(c) for c in t.colnames}
+        new_id = (max(data["IDtraining_stage_booking"]) + 1) if t.nrow else 1
+        stars = next((c["stars"] for c in self.camps() if c["id"] == stage_id), 3)
+        state0 = min(self.db["STA_training_stages_state"].column("IDtraining_stage_state"))
+        row = {"IDtraining_stage_booking": new_id, "fkIDtraining_stage": stage_id,
+               "gene_i_start_date": start_yyyymmdd, "gene_i_end_date": end_yyyymmdd,
+               "fkIDteam": team_id, "fkIDstate": state0,
+               "value_i_efficacite": efficacite if efficacite is not None else stars * 20}
+        for c in t.colnames:
+            data[c].append(row.get(c, 0))
+        t.set_data(data)
+        return new_id
+
     def save(self, path=None):
         cdb.save(path or self.path, self.db.root)

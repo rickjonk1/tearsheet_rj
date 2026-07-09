@@ -276,6 +276,71 @@ $("#btnLoad").onclick=async()=>{ if(state.teamId==null) return toast("Kies eerst
 };
 $("#loadClose").onclick=()=>$("#loadModal").hidden=true;
 
+/* ---------- vorm & training ---------- */
+$("#btnForm").onclick=()=>{ if(state.teamId==null) return toast("Kies eerst een ploeg");
+  $("#formModal").hidden=false; loadForm(); };
+$("#formClose").onclick=()=>$("#formModal").hidden=true;
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on")); t.classList.add("on");
+  const which=t.dataset.tab;
+  $("#tabVorm").hidden=which!=="vorm"; $("#tabKampen").hidden=which!=="kampen";
+  if(which==="kampen") loadCamps();
+});
+
+async function loadForm(){
+  $("#formList").innerHTML='<div class="skeleton">Vorm laden…</div>';
+  const d=await api("/api/form?team="+state.teamId);
+  state.year=d.year;
+  $("#formList").innerHTML=`<div class="formrow head"><span>Renner</span><span>Frisheid</span><span>Vermoeidheid</span><span>Vorm</span></div>`;
+  d.riders.forEach(r=>$("#formList").appendChild(formRow(r)));
+}
+function slider(r,key,cls){
+  const wrap=el("div","fctl"+(cls?" "+cls:""));
+  wrap.innerHTML=`<input type="range" min="0" max="100" value="${Math.round(r[key])}"><span class="fv">${Math.round(r[key])}</span>`;
+  const inp=wrap.querySelector("input"), fv=wrap.querySelector(".fv");
+  inp.oninput=()=>fv.textContent=inp.value;
+  inp.onchange=async()=>{ await api("/api/form",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rider:r.id,fields:{[key]:+inp.value}})}); toast("Vorm bijgewerkt"); };
+  return wrap;
+}
+function formRow(r){
+  const row=el("div","formrow");
+  row.innerHTML=`<div class="fname">${r.name}<small>${r.specialty} · niv. ${r.ability}</small></div>`;
+  row.appendChild(slider(r,"freshness"));
+  row.appendChild(slider(r,"fatigue","fat"));
+  row.appendChild(slider(r,"fit"));
+  return row;
+}
+$("#bulkFresh").onclick=async()=>{ await api("/api/form-bulk",{method:"POST",headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({team:state.teamId,action:"fresh"})}); toast("Iedereen fris & hersteld"); loadForm(); };
+$("#bulkPeak").onclick=async()=>{ await api("/api/form-bulk",{method:"POST",headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({team:state.teamId,action:"peak"})}); toast("Iedereen in piekvorm"); loadForm(); };
+
+async function loadCamps(){
+  const d=await api(`/api/camps?team=${state.teamId}`); state.year=d.year;
+  const sel=$("#campSelect");
+  sel.innerHTML=d.camps.map(c=>`<option value="${c.id}">${'★'.repeat(c.stars)} ${c.place}${c.altitude?' (hoogte)':''} · ${c.open}–${c.close}</option>`).join("");
+  renderCampList(d.booked);
+}
+function renderCampList(booked){
+  const box=$("#campList");
+  if(!booked.length){ box.innerHTML=`<div style="color:var(--mut2);font-size:12px;padding:8px 2px">Nog geen kampen geboekt.</div>`; return; }
+  box.innerHTML=booked.map(c=>{
+    const s=String(c.start), e=String(c.end);
+    const fmt=x=>`${x.slice(6,8)}/${x.slice(4,6)}`;
+    return `<div class="camprow"><span>${c.place}</span><span class="cdate">${fmt(s)} – ${fmt(e)}</span></div>`;
+  }).join("");
+}
+function parseDM(v){ const m=(v||"").match(/(\d{1,2})\D+(\d{1,2})/); if(!m) return null;
+  const dd=String(m[1]).padStart(2,'0'), mm=String(m[2]).padStart(2,'0'); return `${state.year}${mm}${dd}`; }
+$("#campBook").onclick=async()=>{
+  const stage=+$("#campSelect").value, start=parseDM($("#campStart").value), end=parseDM($("#campEnd").value);
+  if(!start||!end) return toast("Vul start en eind in als dd/mm");
+  await api("/api/book-camp",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({team:state.teamId,stage,start:+start,end:+end})});
+  toast("Kamp geboekt"); loadCamps();
+};
+
 /* ---------- generator modal ---------- */
 $("#btnGenerate").onclick=()=>{ if(state.teamId==null) return toast("Kies eerst een ploeg");
   $("#genModal").hidden=false; };
