@@ -198,6 +198,7 @@ class Handler(BaseHTTPRequestHandler):
                     captains.append({"id": rid, "name": CAREER.rider_label(rid), "role": role,
                                      "ability": rr["ability"], "specialty": rr["specialty"],
                                      "races": s, "candidates": calendar_gen.candidates_for(CAREER, tid, rid, gate),
+                                     "recons": sorted(x for x in CAREER.rider_recon_races(rid) if x),
                                      "days": sum(max(1, CAREER.races[x["race"]]["stages"]) for x in s)})
             if data.get("apply"):
                 calendar_gen.apply(CAREER, gen)
@@ -249,6 +250,12 @@ class Handler(BaseHTTPRequestHandler):
                 elif action == "peak":
                     CAREER.set_form(r["id"], {"freshness": 100.0, "fatigue": 0.0, "fit": 99.0, "prepa": 99.0})
             return self._send(200, {"ok": True, "count": len(CAREER.team_form(tid))})
+        if u.path == "/api/plan-altitude":
+            camp = CAREER.plan_altitude(int(data["team"]), int(data["target"]))
+            return self._send(200, {"ok": camp is not None, "camp": camp})
+        if u.path == "/api/recon":
+            CAREER.set_recon(int(data["rider"]), int(data["race"]), bool(data.get("on", True)))
+            return self._send(200, {"ok": True})
         if u.path == "/api/book-camp":
             nid = CAREER.book_camp(int(data["team"]), int(data["stage"]),
                                    int(data["start"]), int(data["end"]))

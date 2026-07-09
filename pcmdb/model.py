@@ -355,6 +355,63 @@ class Career:
                         "start": cols["gene_i_start_date"][i], "end": cols["gene_i_end_date"][i]})
         return out
 
+    def plan_altitude(self, team_id, target_yyyymmdd, days=18, lead=7):
+        """Book the best altitude camp that's open before `target`, ending ~`lead`
+        days before it. Returns {id, place, start, end} or None."""
+        import datetime
+        y, m, d = target_yyyymmdd // 10000, (target_yyyymmdd // 100) % 100, target_yyyymmdd % 100
+        try:
+            end_d = datetime.date(y, m, d) - datetime.timedelta(days=lead)
+        except ValueError:
+            return None
+        start_d = end_d - datetime.timedelta(days=days)
+        cm = end_d.month
+        cand = [c for c in self.camps() if c["altitude"] and c["open"] <= cm <= c["close"]]
+        if not cand:
+            cand = [c for c in self.camps() if c["altitude"]]
+        if not cand:
+            return None
+        camp = max(cand, key=lambda c: c["stars"])
+        start = start_d.year * 10000 + start_d.month * 100 + start_d.day
+        end = end_d.year * 10000 + end_d.month * 100 + end_d.day
+        self.book_camp(team_id, camp["id"], start, end)
+        return {"id": camp["id"], "place": camp["place"], "start": start, "end": end, "stars": camp["stars"]}
+
+    # ---- recons (DYN_training_stage_recon: rider -> stage) ----
+    def _stage_race_maps(self):
+        if getattr(self, "_srmap", None) is None:
+            st = self.db["STA_stage"]
+            sid = st.column("IDstage"); rid = st.column("fkIDrace")
+            self._stage_to_race = {sid[i]: rid[i] for i in range(st.nrow)}
+            self._race_to_stages = {}
+            for i in range(st.nrow):
+                self._race_to_stages.setdefault(rid[i], []).append(sid[i])
+            self._srmap = True
+        return self._stage_to_race, self._race_to_stages
+
+    def rider_recon_races(self, rider_id):
+        s2r, _ = self._stage_race_maps()
+        t = self.db["DYN_training_stage_recon"]
+        cyc = t.column("fkIDcyclist"); stg = t.column("fkIDstage")
+        return {s2r.get(stg[i]) for i in range(t.nrow) if cyc[i] == rider_id}
+
+    def set_recon(self, rider_id, race_id, on):
+        _, r2s = self._stage_race_maps()
+        stages = set(r2s.get(race_id, []))
+        t = self.db["DYN_training_stage_recon"]
+        ids = t.column("IDtraining_stage_recon")
+        cyc = t.column("fkIDcyclist"); stg = t.column("fkIDstage")
+        if on:
+            have = {stg[i] for i in range(len(ids)) if cyc[i] == rider_id}
+            nxt = (max(ids) + 1) if ids else 1
+            for s in stages:
+                if s not in have:
+                    ids.append(nxt); cyc.append(rider_id); stg.append(s); nxt += 1
+        else:
+            keep = [i for i in range(len(ids)) if not (cyc[i] == rider_id and stg[i] in stages)]
+            ids[:] = [ids[i] for i in keep]; cyc[:] = [cyc[i] for i in keep]; stg[:] = [stg[i] for i in keep]
+        t.set_data({"IDtraining_stage_recon": ids, "fkIDcyclist": cyc, "fkIDstage": stg})
+
     def book_camp(self, team_id, stage_id, start_yyyymmdd, end_yyyymmdd, efficacite=None):
         """Append a booking row to DYN_training_stage_booking."""
         t = self.db["DYN_training_stage_booking"]

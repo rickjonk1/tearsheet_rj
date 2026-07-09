@@ -352,8 +352,13 @@ function renderPlanner(){
     const cls=c.role==='Leider'?'leader':'co';
     const sel=setup.captainRaces[c.id];
     const nsel=c.candidates.filter(r=>sel.has(r.race)).length;
+    const recon=new Set(c.recons||[]);
     html+=`<div class="planrow ${cls}"><div class="cap"><div class="cn">${c.name}</div>
-      <div class="cmeta">${c.specialty} · <b>${nsel}</b> koersen</div><span class="rolechip">${c.role.toUpperCase()}</span></div>`;
+      <div class="cmeta">${c.specialty} · <b>${nsel}</b> koersen</div>
+      <div class="caprow"><span class="rolechip">${c.role.toUpperCase()}</span>
+        <button class="capbtn" data-camp="${c.id}" title="Hoogtestage vóór grootste doel">🏔</button>
+        <button class="capbtn ${recon.size?'on':''}" data-recon="${c.id}" title="Recon doelkoersen">👁</button>
+      </div></div>`;
     // dynamic form: the 3 biggest chosen races become peak targets
     const peaks=new Set(c.candidates.filter(r=>sel.has(r.race)&&r.pop>=60)
       .sort((a,b)=>b.pop-a.pop).slice(0,3).map(r=>r.race));
@@ -363,8 +368,8 @@ function renderPlanner(){
       (byMonth[m]||[]).sort((a,b)=>a.day-b.day).forEach(r=>{
         const on=sel.has(r.race);
         const klass=on?(peaks.has(r.race)?'peak':(r.pop>=70?'big':'')):'ghost';
-        const mark=peaks.has(r.race)?'▲ ':'';
-        html+=`<span class="rchip ${klass}" data-cap="${c.id}" data-race="${r.race}" title="${r.name} · fit ${Math.round(r.fit)}${peaks.has(r.race)?' · VORMPIEK':''}${on?'':' — klik om toe te voegen'}">${mark}${String(r.day).padStart(2,'0')} ${r.name.slice(0,14)}</span>`;
+        const mark=(peaks.has(r.race)?'▲ ':'')+(recon.has(r.race)?'👁 ':'');
+        html+=`<span class="rchip ${klass}" data-cap="${c.id}" data-race="${r.race}" title="${r.name} · fit ${Math.round(r.fit)}${peaks.has(r.race)?' · VORMPIEK':''}${recon.has(r.race)?' · RECON':''}${on?'':' — klik om toe te voegen'}">${mark}${String(r.day).padStart(2,'0')} ${r.name.slice(0,13)}</span>`;
       });
       (d.camps||[]).forEach(cp=>{ if(+String(cp.start).slice(4,6)===m)
         html+=`<span class="rchip camp" title="Trainingskamp ${cp.place}">🏔 ${cp.place.slice(0,12)}</span>`; });
@@ -378,12 +383,41 @@ function renderPlanner(){
     const cap=+ch.dataset.cap, race=+ch.dataset.race, sel=setup.captainRaces[cap];
     sel.has(race)?sel.delete(race):sel.add(race); renderPlanner();
   });
+  box.querySelectorAll("[data-camp]").forEach(bt=>bt.onclick=()=>planAltitude(+bt.dataset.camp));
+  box.querySelectorAll("[data-recon]").forEach(bt=>bt.onclick=()=>toggleRecon(+bt.dataset.recon));
   const total=d.captains.reduce((a,c)=>a+c.candidates.filter(r=>setup.captainRaces[c.id].has(r.race)).length,0);
   $("#setupInfo").innerHTML=`<b>${total}</b> doelkoersen · <span style="color:var(--grn)">▲ vormpiek</span> = automatisch rond de 3 grootste doelen · knechten auto op routeprofiel`;
   $("#setupActions").innerHTML=`<button class="btn ghost" id="setupBack">← Rollen</button>
     <button class="btn primary" id="setupApply">Toepassen &amp; opslaan in career</button>`;
   $("#setupBack").onclick=()=>{ setup.phase=1; renderSetup(); };
   $("#setupApply").onclick=applySeason;
+}
+function captainPeaks(c){
+  const sel=setup.captainRaces[c.id];
+  return c.candidates.filter(r=>sel.has(r.race)&&r.pop>=60).sort((a,b)=>b.pop-a.pop).slice(0,3);
+}
+async function planAltitude(capId){
+  const c=setup.data.captains.find(x=>x.id===capId);
+  const peaks=captainPeaks(c);
+  if(!peaks.length) return toast("Kies eerst een grote doelkoers voor deze renner");
+  const target=setup.data.year*10000+peaks[0].month*100+peaks[0].day;
+  const r=await api("/api/plan-altitude",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({team:state.teamId,target})});
+  if(!r.ok) return toast("Geen hoogtestage beschikbaar");
+  const cm=await api(`/api/camps?team=${state.teamId}`); setup.data.camps=cm.booked;
+  toast(`Hoogtestage ${r.camp.place} geboekt vóór ${peaks[0].name}`); renderPlanner();
+}
+async function toggleRecon(capId){
+  const c=setup.data.captains.find(x=>x.id===capId);
+  const peaks=captainPeaks(c).map(p=>p.race);
+  const cur=new Set(c.recons||[]);
+  const on=!peaks.every(r=>cur.has(r));   // if not all reconned -> turn on, else off
+  for(const race of peaks){
+    await api("/api/recon",{method:"POST",headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({rider:capId,race,on})});
+  }
+  c.recons = on ? [...new Set([...(c.recons||[]),...peaks])] : (c.recons||[]).filter(r=>!peaks.includes(r));
+  toast(on?"Doelkoersen verkend (recon)":"Recon verwijderd"); renderPlanner();
 }
 async function applySeason(){
   const {leaders,coleaders}=setupRoleArrays();

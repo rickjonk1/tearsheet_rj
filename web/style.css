@@ -267,7 +267,12 @@ button{font-family:inherit;cursor:pointer}
   border-right:1px solid var(--line2);position:sticky;left:0;background:var(--bg2);z-index:1}
 .planrow .cap .cn{font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .planrow .cap .cmeta{font-size:10.5px;color:var(--mut);margin-top:2px}
-.planrow .cap .rolechip{font-size:8.5px;font-weight:800;padding:1px 5px;border-radius:4px;align-self:flex-start;margin-top:3px}
+.planrow .cap .caprow{display:flex;align-items:center;gap:5px;margin-top:4px}
+.planrow .cap .rolechip{font-size:8.5px;font-weight:800;padding:1px 5px;border-radius:4px;align-self:flex-start}
+.capbtn{border:1px solid var(--line2);background:var(--panel);border-radius:6px;font-size:11px;
+  line-height:1;padding:3px 5px;cursor:pointer;transition:.12s}
+.capbtn:hover{border-color:var(--grn)}
+.capbtn.on{border-color:var(--blue);background:rgba(91,157,255,.15)}
 .planrow.leader .rolechip{color:var(--gold);border:1px solid rgba(251,191,36,.4)}
 .planrow.co .rolechip{color:var(--grn);border:1px solid rgba(55,224,139,.4)}
 .mcell{border-left:1px solid var(--line);padding:4px 3px;display:flex;flex-direction:column;gap:3px;position:relative}
