@@ -451,5 +451,60 @@ class Career:
         t.set_data(data)
         return new_id
 
+    # ---- bike balance (STA_equipment_template frame archetypes) ----
+    FRAME_LABELS = {"plain": "Aero (vlak/sprint)", "mountain": "Bergfiets (klim)",
+                    "poly": "Allround", "cobbles": "Comfort (kasseien)",
+                    "tt_flat": "Tijdrit (vlak)", "tt_poly": "Tijdrit (heuvel)"}
+
+    @staticmethod
+    def _frame_base(name):
+        import re
+        return re.sub(r"\d+$", "", name)
+
+    def bike_frames(self):
+        """Frame archetypes (grouped over their 4 versions) with aero/light/comfort."""
+        t = self.db["STA_equipment_template"]
+        typ = t.column("fkIDequipment_type"); cst = t.column("CONSTANT")
+        a = t.column("gene_i_weight_aero"); li = t.column("gene_i_weight_light")
+        cf = t.column("gene_i_weight_confort")
+        out = {}
+        for i in range(t.nrow):
+            if typ[i] != 1:
+                continue
+            base = self._frame_base(cst[i])
+            out.setdefault(base, {"base": base, "label": self.FRAME_LABELS.get(base, base),
+                                  "aero": a[i], "light": li[i], "confort": cf[i], "count": 0})
+            out[base]["count"] += 1
+        order = ["plain", "poly", "mountain", "cobbles", "tt_flat", "tt_poly"]
+        return sorted(out.values(), key=lambda x: order.index(x["base"]) if x["base"] in order else 99)
+
+    def set_frame_archetype(self, base, aero, light, confort):
+        """Set aero/light/comfort for every version of a frame archetype."""
+        t = self.db["STA_equipment_template"]
+        typ = t.column("fkIDequipment_type"); cst = t.column("CONSTANT")
+        a = t.column("gene_i_weight_aero"); li = t.column("gene_i_weight_light")
+        cf = t.column("gene_i_weight_confort")
+        for i in range(t.nrow):
+            if typ[i] == 1 and self._frame_base(cst[i]) == base:
+                a[i] = int(aero); li[i] = int(light); cf[i] = int(confort)
+        t.set_column("gene_i_weight_aero", a)
+        t.set_column("gene_i_weight_light", li)
+        t.set_column("gene_i_weight_confort", cf)
+
+    # a rebalance that turns the "poly dominates" default into genuine specialisation
+    REBALANCE_SPECIALISED = {
+        "plain":    (3, 0, 1),   # aero bike: best on the flat, poor climbing
+        "mountain": (0, 3, 1),   # climbing bike: best on climbs, poor aero
+        "poly":     (2, 2, 1),   # all-round: a compromise, never the best
+        "cobbles":  (0, 1, 3),   # comfort: cobbles only
+        "tt_flat":  (3, 0, 0),
+        "tt_poly":  (3, 1, 0),
+    }
+
+    def rebalance_bikes(self, preset=None):
+        preset = preset or self.REBALANCE_SPECIALISED
+        for base, (a, l, c) in preset.items():
+            self.set_frame_archetype(base, a, l, c)
+
     def save(self, path=None):
         cdb.save(path or self.path, self.db.root)

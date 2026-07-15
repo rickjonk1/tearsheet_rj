@@ -137,6 +137,8 @@ class Handler(BaseHTTPRequestHandler):
             tid = q.get("team")
             booked = CAREER.team_camps(int(tid[0])) if tid else []
             return self._send(200, {"year": CAREER.season_year(), "camps": camps, "booked": booked})
+        if u.path == "/api/bikes":
+            return self._send(200, {"frames": CAREER.bike_frames()})
         if u.path == "/api/load":
             tid = int(q.get("team", [0])[0])
             info = CAREER.team_load(tid)
@@ -326,6 +328,13 @@ class Handler(BaseHTTPRequestHandler):
             nid = CAREER.book_camp(int(data["team"]), int(data["stage"]),
                                    int(data["start"]), int(data["end"]))
             return self._send(200, {"ok": True, "id": nid})
+        if u.path == "/api/bike-set":
+            CAREER.set_frame_archetype(data["base"], int(data["aero"]),
+                                       int(data["light"]), int(data["confort"]))
+            return self._send(200, {"ok": True, "frames": CAREER.bike_frames()})
+        if u.path == "/api/bike-rebalance":
+            CAREER.rebalance_bikes()
+            return self._send(200, {"ok": True, "frames": CAREER.bike_frames()})
         if u.path == "/api/open":
             open_career(data["path"])
             return self._send(200, {"ok": True, "path": CAREER_PATH,

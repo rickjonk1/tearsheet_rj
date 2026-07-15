@@ -276,6 +276,41 @@ $("#btnLoad").onclick=async()=>{ if(state.teamId==null) return toast("Kies eerst
 };
 $("#loadClose").onclick=()=>$("#loadModal").hidden=true;
 
+/* ---------- fietsbalans ---------- */
+$("#btnBikes").onclick=()=>{ if(state.teamId==null&&!state.teams.length) return toast("Geen career geladen");
+  $("#bikesModal").hidden=false; loadBikes(); };
+$("#bikesClose").onclick=()=>$("#bikesModal").hidden=true;
+async function loadBikes(){
+  const d=await api("/api/bikes"); renderBikes(d.frames);
+}
+function renderBikes(frames){
+  const box=$("#bikeList");
+  const attr=(f,key,cls)=>`<div class="bk-attr ${cls}"><div class="bk-lbl">${{aero:'Aero',light:'Gewicht',confort:'Comfort'}[key]}</div>
+    <div class="bk-step"><button data-b="${f.base}" data-k="${key}" data-d="-1">−</button>
+      <span class="bk-val">${f[key]}</span>
+      <button data-b="${f.base}" data-k="${key}" data-d="1">+</button></div></div>`;
+  box.innerHTML=frames.map(f=>`<div class="bikerow">
+    <div class="bk-name">${f.label}<small>${f.base} · ${f.count} modellen</small></div>
+    ${attr(f,'aero','aero')}${attr(f,'light','light')}${attr(f,'confort','confort')}</div>`).join("");
+  box.querySelectorAll(".bk-step button").forEach(bt=>bt.onclick=()=>stepBike(frames,bt.dataset.b,bt.dataset.k,+bt.dataset.d));
+}
+async function stepBike(frames,base,key,delta){
+  const f=frames.find(x=>x.base===base);
+  const nv=Math.max(0,Math.min(3,f[key]+delta));
+  if(nv===f[key]) return;
+  f[key]=nv;
+  const r=await api("/api/bike-set",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({base,aero:f.aero,light:f.light,confort:f.confort})});
+  renderBikes(r.frames);
+}
+$("#bikeRebalance").onclick=async()=>{
+  const r=await api("/api/bike-rebalance",{method:"POST",headers:{'Content-Type':'application/json'},body:"{}"});
+  renderBikes(r.frames); toast("Aero ↔ berg gebalanceerd");
+};
+$("#bikeSave").onclick=async()=>{ const r=await api("/api/save",{method:"POST",
+  headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+  toast(r.ok?"Fietsbalans opgeslagen naar .cdb":"Opslaan mislukt"); };
+
 /* ---------- seizoen opzetten: rollen + horizontale jaarplanner ---------- */
 const setup={phase:1, roles:{}, data:null};
 function openSetup(){

@@ -26,6 +26,7 @@
       <button class="btn ghost" id="btnOpen" hidden>📂 Openen</button>
       <button class="btn ghost" id="btnSetup">🗓 Seizoen opzetten</button>
       <button class="btn ghost" id="btnForm">🏔 Vorm &amp; Training</button>
+      <button class="btn ghost" id="btnBikes">🚲 Fietsbalans</button>
       <button class="btn ghost" id="btnLoad">📊 Belasting</button>
       <button class="btn ghost" id="btnGenerate">✨ Kalender</button>
       <button class="btn primary" id="btnSave">Opslaan</button>
@@ -151,6 +152,26 @@
           <button class="btn primary" id="campBook">Boeken</button>
         </div>
         <div id="campList" class="camplist"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="bikesModal" hidden>
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <h2>Fietsbalans — aero vs. berg</h2>
+        <button class="iconbtn" id="bikesClose">✕</button>
+      </div>
+      <p class="modal-sub">Elk frame-archetype geeft <b>aero</b>, <b>gewicht (klim)</b> en <b>comfort</b> (0–3).
+        Standaard is de allround-fiets een strikte upgrade van de bergfiets, dus kiest iedereen aero/allround.
+        Pas de waarden aan of gebruik de rebalance zodat elk type zijn eigen terrein heeft.
+        Schrijft naar <code>STA_equipment_template</code>. <span class="exp">Test in-game.</span></p>
+      <div class="bulkbar">
+        <button class="btn gold" id="bikeRebalance">⚖️ Balanceer aero ↔ berg</button>
+      </div>
+      <div id="bikeList" class="bikelist"></div>
+      <div class="genactions" style="margin-top:16px">
+        <button class="btn primary" id="bikeSave">Opslaan naar career</button>
       </div>
     </div>
   </div>

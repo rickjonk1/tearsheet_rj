@@ -366,6 +366,21 @@ code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding
   padding:1px 6px;border-radius:5px}
 .camprow .cdate{color:var(--mut);margin-left:auto;font-variant-numeric:tabular-nums}
 
+/* ---------- bike balance ---------- */
+.bikelist{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow-y:auto}
+.bikerow{display:grid;grid-template-columns:1.3fr repeat(3,1fr);gap:14px;align-items:center;
+  padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.bikerow .bk-name{font-size:13.5px;font-weight:650}
+.bikerow .bk-name small{display:block;color:var(--mut);font-weight:400;font-size:11px}
+.bk-attr{text-align:center}
+.bk-attr .bk-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut2);margin-bottom:5px}
+.bk-step{display:inline-flex;align-items:center;gap:8px}
+.bk-step button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line2);background:var(--panel2);
+  color:var(--txt);font-size:15px;line-height:1;cursor:pointer}
+.bk-step button:hover{border-color:var(--grn)}
+.bk-step .bk-val{width:16px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
+.bk-attr.aero .bk-val{color:var(--blue)} .bk-attr.light .bk-val{color:var(--grn)} .bk-attr.confort .bk-val{color:var(--gold)}
+
 /* ---------- warnings / load ---------- */
 .warntag{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--red);font-weight:600}
 .rider.busy{opacity:.55}
