@@ -323,104 +323,131 @@ function setupRoleArrays(){
   return {leaders:Object.keys(setup.roles).filter(k=>setup.roles[k]==='leader').map(Number),
           coleaders:Object.keys(setup.roles).filter(k=>setup.roles[k]==='co').map(Number)};
 }
+const MON3B=["","JAN","FEB","MRT","APR","MEI","JUN","JUL","AUG","SEP","OKT","NOV","DEC"];
 async function buildSeason(){
   const {leaders,coleaders}=setupRoleArrays();
+  setup.roleArrays={leaders,coleaders};
   $("#setupActions").innerHTML=`<span style="color:var(--mut)">Bezig…</span>`;
-  const d=await api("/api/season-setup",{method:"POST",headers:{'Content-Type':'application/json'},
+  const s=await api("/api/season-setup",{method:"POST",headers:{'Content-Type':'application/json'},
     body:JSON.stringify({team:state.teamId,leaders,coleaders,seed:7})});
-  setup.data=d;
-  // client-editable per-captain race selection, seeded from the engine
   setup.captainRaces={};
-  d.captains.forEach(c=>setup.captainRaces[c.id]=new Set(c.races.map(r=>r.race)));
+  s.captains.forEach(c=>setup.captainRaces[c.id]=new Set(c.races.map(r=>r.race)));
+  setup.collapseDom=true;
+  await refreshPreview();
   setup.phase=2; renderSetup();
 }
-const MON3B=["","JAN","FEB","MRT","APR","MEI","JUN","JUL","AUG","SEP","OKT","NOV","DEC"];
-function captainDays(c){
-  const sel=setup.captainRaces[c.id];
-  return c.candidates.filter(r=>sel.has(r.race)).reduce((a,r)=>a+1,0);
+async function refreshPreview(){
+  const {leaders,coleaders}=setup.roleArrays;
+  const captains={}; Object.keys(setup.captainRaces).forEach(id=>captains[id]=[...setup.captainRaces[id]]);
+  setup.preview=await api("/api/season-preview",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({team:state.teamId,leaders,coleaders,captains})});
 }
+const ROLE_ORDER=[["Leider","Kopmannen","leader"],["Co-leider","Co-leiders","co"],["Knecht","Knechten","dom"]];
 function renderPlanner(){
-  $("#setupPhaseLabel").textContent="Stap 2 · Horizontale jaarplanner — klik koersen aan/uit";
+  $("#setupPhaseLabel").textContent="Stap 2 · Jaarplanner";
   $("#setupRoles").hidden=true; const box=$("#setupPlanner"); box.hidden=false;
-  const d=setup.data;
-  let html=`<div class="planlegend">
-    <span><i class="rchip big" style="display:inline-block"></i> Grote doelkoers</span>
-    <span><i class="rchip" style="display:inline-block"></i> Gekozen koers</span>
-    <span><i class="rchip ghost" style="display:inline-block"></i> Beschikbaar (klik om toe te voegen)</span>
-    <span><i class="rchip camp" style="display:inline-block"></i> Trainingskamp</span></div>`;
-  html+=`<div class="planner"><div class="planner-months"><div class="mh corner">Renner</div>`;
-  for(let m=1;m<=12;m++) html+=`<div class="mh">${MON3B[m]}</div>`;
+  const d=setup.preview; const campMonth={};
+  (d.camps||[]).forEach(cp=>campMonth[+String(cp.start).slice(4,6)]=cp);
+  let html=`<div class="pl2-legend">
+    <span class="chip2 big">Grote doelkoers</span>
+    <span class="chip2">Koers</span>
+    <span class="mk">▲ vormpiek</span><span class="mk">👁 recon</span><span class="mk">🏔 hoogtestage</span>
+    <span class="pl2-hint">Klik een cel bij een kopman/co-leider om koersen te kiezen.</span></div>`;
+  html+=`<div class="pl2"><div class="pl2-head"><div class="pl2-name">Renner</div>`;
+  for(let m=1;m<=12;m++) html+=`<div class="pl2-mh${campMonth[m]?' camp':''}">${MON3B[m]}${campMonth[m]?' 🏔':''}</div>`;
   html+=`</div>`;
-  d.captains.forEach(c=>{
-    const cls=c.role==='Leider'?'leader':'co';
-    const sel=setup.captainRaces[c.id];
-    const nsel=c.candidates.filter(r=>sel.has(r.race)).length;
-    const recon=new Set(c.recons||[]);
-    html+=`<div class="planrow ${cls}"><div class="cap"><div class="cn">${c.name}</div>
-      <div class="cmeta">${c.specialty} · <b>${nsel}</b> koersen</div>
-      <div class="caprow"><span class="rolechip">${c.role.toUpperCase()}</span>
-        <button class="capbtn" data-camp="${c.id}" title="Hoogtestage vóór grootste doel">🏔</button>
-        <button class="capbtn ${recon.size?'on':''}" data-recon="${c.id}" title="Recon doelkoersen">👁</button>
-      </div></div>`;
-    // dynamic form: the 3 biggest chosen races become peak targets
-    const peaks=new Set(c.candidates.filter(r=>sel.has(r.race)&&r.pop>=60)
-      .sort((a,b)=>b.pop-a.pop).slice(0,3).map(r=>r.race));
-    const byMonth={}; c.candidates.forEach(r=>(byMonth[r.month]=byMonth[r.month]||[]).push(r));
-    for(let m=1;m<=12;m++){
-      html+=`<div class="mcell">`;
-      (byMonth[m]||[]).sort((a,b)=>a.day-b.day).forEach(r=>{
-        const on=sel.has(r.race);
-        const klass=on?(peaks.has(r.race)?'peak':(r.pop>=70?'big':'')):'ghost';
-        const mark=(peaks.has(r.race)?'▲ ':'')+(recon.has(r.race)?'👁 ':'');
-        html+=`<span class="rchip ${klass}" data-cap="${c.id}" data-race="${r.race}" title="${r.name} · fit ${Math.round(r.fit)}${peaks.has(r.race)?' · VORMPIEK':''}${recon.has(r.race)?' · RECON':''}${on?'':' — klik om toe te voegen'}">${mark}${String(r.day).padStart(2,'0')} ${r.name.slice(0,13)}</span>`;
-      });
-      (d.camps||[]).forEach(cp=>{ if(+String(cp.start).slice(4,6)===m)
-        html+=`<span class="rchip camp" title="Trainingskamp ${cp.place}">🏔 ${cp.place.slice(0,12)}</span>`; });
+  ROLE_ORDER.forEach(([role,label,cls])=>{
+    const list=d.riders.filter(r=>r.role===role);
+    if(!list.length) return;
+    const collapsed=role==='Knecht'&&setup.collapseDom;
+    html+=`<div class="pl2-sec ${cls}" data-sec="${role}"><span>${label}</span>
+      <span class="pl2-seccount">${list.length}</span>${role==='Knecht'?`<span class="pl2-toggle">${collapsed?'tonen ▾':'verbergen ▴'}</span>`:''}</div>`;
+    if(collapsed) return;
+    list.forEach(r=>{
+      const editable=r.role!=='Knecht';
+      html+=`<div class="pl2-row ${cls}"><div class="pl2-name">
+        <div class="pl2-rn">${r.name}</div>
+        <div class="pl2-rm">${r.specialty} · ${r.days} dagen${r.races.length?` · ${r.races.length} koersen`:''}</div>`;
+      if(editable) html+=`<div class="pl2-acts">
+        <button class="capbtn" data-camp="${r.id}" title="Hoogtestage vóór grootste doel">🏔</button>
+        <button class="capbtn ${r.races.some(x=>x.recon)?'on':''}" data-recon="${r.id}" title="Recon doelkoersen">👁</button></div>`;
       html+=`</div>`;
-    }
-    html+=`</div>`;
+      const byMonth={}; r.races.forEach(x=>(byMonth[x.month]=byMonth[x.month]||[]).push(x));
+      for(let m=1;m<=12;m++){
+        html+=`<div class="pl2-cell${editable?' edit':''}" ${editable?`data-rid="${r.id}" data-month="${m}"`:''}>`;
+        (byMonth[m]||[]).sort((a,b)=>a.day-b.day).forEach(x=>{
+          const mk=(x.peak?'▲':'')+(x.recon?'👁':'');
+          html+=`<span class="chip2 ${x.pop>=70?'big':''}${x.leader?' lead':''}" title="${x.name}${x.peak?' · vormpiek':''}${x.recon?' · recon':''}">${mk?mk+' ':''}${String(x.day).padStart(2,'0')} ${x.name.slice(0,13)}</span>`;
+        });
+        if(campMonth[m]&&editable) html+=`<span class="chip2 camp" title="Hoogtestage ${campMonth[m].place}">🏔 ${campMonth[m].place.slice(0,11)}</span>`;
+        html+=`</div>`;
+      }
+      html+=`</div>`;
+    });
   });
   html+=`</div>`;
   box.innerHTML=html;
-  box.querySelectorAll(".rchip[data-race]").forEach(ch=>ch.onclick=()=>{
-    const cap=+ch.dataset.cap, race=+ch.dataset.race, sel=setup.captainRaces[cap];
-    sel.has(race)?sel.delete(race):sel.add(race); renderPlanner();
-  });
-  box.querySelectorAll("[data-camp]").forEach(bt=>bt.onclick=()=>planAltitude(+bt.dataset.camp));
-  box.querySelectorAll("[data-recon]").forEach(bt=>bt.onclick=()=>toggleRecon(+bt.dataset.recon));
-  const total=d.captains.reduce((a,c)=>a+c.candidates.filter(r=>setup.captainRaces[c.id].has(r.race)).length,0);
-  $("#setupInfo").innerHTML=`<b>${total}</b> doelkoersen · <span style="color:var(--grn)">▲ vormpiek</span> = automatisch rond de 3 grootste doelen · knechten auto op routeprofiel`;
+  box.querySelector('[data-sec="Knecht"] .pl2-toggle')?.addEventListener('click',()=>{
+    setup.collapseDom=!setup.collapseDom; renderPlanner(); });
+  box.querySelectorAll(".pl2-cell.edit").forEach(c=>c.onclick=e=>openCell(+c.dataset.rid,+c.dataset.month,c));
+  box.querySelectorAll("[data-camp]").forEach(bt=>bt.onclick=e=>{e.stopPropagation();planAltitude(+bt.dataset.camp);});
+  box.querySelectorAll("[data-recon]").forEach(bt=>bt.onclick=e=>{e.stopPropagation();toggleRecon(+bt.dataset.recon);});
+  $("#setupInfo").innerHTML=`<b>${d.planned}</b> koersen gepland · knechten automatisch op routeprofiel`;
   $("#setupActions").innerHTML=`<button class="btn ghost" id="setupBack">← Rollen</button>
-    <button class="btn primary" id="setupApply">Toepassen &amp; opslaan in career</button>`;
+    <button class="btn primary" id="setupApply">Toepassen &amp; opslaan</button>`;
   $("#setupBack").onclick=()=>{ setup.phase=1; renderSetup(); };
   $("#setupApply").onclick=applySeason;
 }
-function captainPeaks(c){
-  const sel=setup.captainRaces[c.id];
-  return c.candidates.filter(r=>sel.has(r.race)&&r.pop>=60).sort((a,b)=>b.pop-a.pop).slice(0,3);
+function closePopover(){ document.getElementById("cellPop")?.remove(); }
+function openCell(rid,month,anchor){
+  closePopover();
+  const r=setup.preview.riders.find(x=>x.id===rid);
+  const sel=setup.captainRaces[rid];
+  const cands=r.candidates.filter(c=>c.month===month).sort((a,b)=>b.pop-a.pop);
+  const pop=document.createElement("div"); pop.id="cellPop"; pop.className="cellpop";
+  const render=()=>{
+    pop.innerHTML=`<div class="cp-head">${r.name} · ${MON3B[month]}</div>`+
+      (cands.length?cands.map(c=>`<div class="cp-row ${sel.has(c.race)?'on':''}" data-r="${c.race}">
+        <span class="cp-check">${sel.has(c.race)?'✓':''}</span>
+        <span class="cp-nm">${String(c.day).padStart(2,'0')} ${c.name}</span>
+        <span class="cp-fit">${Math.round(c.fit)}</span></div>`).join("")
+        :`<div class="cp-empty">Geen passende koersen deze maand</div>`)+
+      `<button class="btn primary cp-done" id="cpDone">Klaar</button>`;
+    pop.querySelectorAll(".cp-row").forEach(row=>row.onclick=()=>{
+      const rc=+row.dataset.r; sel.has(rc)?sel.delete(rc):sel.add(rc); render();
+    });
+    pop.querySelector("#cpDone").onclick=async()=>{ closePopover(); await refreshPreview(); renderPlanner(); };
+  };
+  render();
+  document.body.appendChild(pop);
+  const rc=anchor.getBoundingClientRect();
+  pop.style.top=Math.min(window.innerHeight-pop.offsetHeight-12,rc.bottom+6)+"px";
+  pop.style.left=Math.min(window.innerWidth-pop.offsetWidth-12,rc.left)+"px";
+  setTimeout(()=>document.addEventListener("mousedown",outside),0);
+  function outside(e){ if(!pop.contains(e.target)){ document.removeEventListener("mousedown",outside);
+    closePopover(); refreshPreview().then(renderPlanner); } }
 }
-async function planAltitude(capId){
-  const c=setup.data.captains.find(x=>x.id===capId);
-  const peaks=captainPeaks(c);
-  if(!peaks.length) return toast("Kies eerst een grote doelkoers voor deze renner");
-  const target=setup.data.year*10000+peaks[0].month*100+peaks[0].day;
-  const r=await api("/api/plan-altitude",{method:"POST",headers:{'Content-Type':'application/json'},
+function riderBiggestTarget(r){
+  const big=r.races.filter(x=>x.leader&&x.pop>=55).sort((a,b)=>b.pop-a.pop)[0];
+  return big?setup.preview.year*10000+big.month*100+big.day:null;
+}
+async function planAltitude(rid){
+  const r=setup.preview.riders.find(x=>x.id===rid);
+  const target=riderBiggestTarget(r);
+  if(!target) return toast("Kies eerst een grote doelkoers voor deze renner");
+  const res=await api("/api/plan-altitude",{method:"POST",headers:{'Content-Type':'application/json'},
     body:JSON.stringify({team:state.teamId,target})});
-  if(!r.ok) return toast("Geen hoogtestage beschikbaar");
-  const cm=await api(`/api/camps?team=${state.teamId}`); setup.data.camps=cm.booked;
-  toast(`Hoogtestage ${r.camp.place} geboekt vóór ${peaks[0].name}`); renderPlanner();
+  if(!res.ok) return toast("Geen hoogtestage beschikbaar");
+  await refreshPreview(); renderPlanner(); toast(`Hoogtestage ${res.camp.place} geboekt`);
 }
-async function toggleRecon(capId){
-  const c=setup.data.captains.find(x=>x.id===capId);
-  const peaks=captainPeaks(c).map(p=>p.race);
-  const cur=new Set(c.recons||[]);
-  const on=!peaks.every(r=>cur.has(r));   // if not all reconned -> turn on, else off
-  for(const race of peaks){
-    await api("/api/recon",{method:"POST",headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({rider:capId,race,on})});
-  }
-  c.recons = on ? [...new Set([...(c.recons||[]),...peaks])] : (c.recons||[]).filter(r=>!peaks.includes(r));
-  toast(on?"Doelkoersen verkend (recon)":"Recon verwijderd"); renderPlanner();
+async function toggleRecon(rid){
+  const r=setup.preview.riders.find(x=>x.id===rid);
+  const targets=r.races.filter(x=>x.peak).map(x=>x.race);
+  if(!targets.length) return toast("Geen vormpiek-koersen om te verkennen");
+  const on=!r.races.filter(x=>x.peak).every(x=>x.recon);
+  for(const race of targets) await api("/api/recon",{method:"POST",headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rider:rid,race,on})});
+  await refreshPreview(); renderPlanner(); toast(on?"Doelkoersen verkend (recon)":"Recon verwijderd");
 }
 async function applySeason(){
   const {leaders,coleaders}=setupRoleArrays();

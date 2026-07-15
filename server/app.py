@@ -206,6 +206,64 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"year": CAREER.season_year(), "captains": captains,
                                     "planned": len(res["plan"]),
                                     "domestiques": len(res["roles"]["domestiques"]), "camps": camps})
+        if u.path == "/api/season-preview":
+            tid = int(data["team"])
+            roles = {"leaders": [int(x) for x in data.get("leaders", [])] or None,
+                     "coleaders": [int(x) for x in data.get("coleaders", [])] or None}
+            captain_races = {int(k): [int(x) for x in v] for k, v in data.get("captains", {}).items()}
+            res = calendar_gen.build_from_captains(CAREER, tid, captain_races, roles=roles,
+                                                   seed=int(data.get("seed", 7)))
+            role_of = {}
+            for rid in res["roles"]["leaders"]:
+                role_of[rid] = "Leider"
+            for rid in res["roles"]["coleaders"]:
+                role_of.setdefault(rid, "Co-leider")
+            # per-rider races from the plan
+            by_rider = {}
+            for p in res["plan"]:
+                for rid in p["roster"]:
+                    by_rider.setdefault(rid, []).append(p["race"])
+
+            def daynum(ra):
+                return (ra["month"] - 1) * 31 + ra["day"]
+
+            def peak_set(race_ids):
+                races = sorted((CAREER.races[r] for r in race_ids),
+                               key=lambda ra: -ra["popularity"])
+                chosen = []
+                for ra in races:
+                    if ra["popularity"] < 55:
+                        continue
+                    if all(abs(daynum(ra) - daynum(c)) >= 70 for c in chosen):
+                        chosen.append(ra)
+                    if len(chosen) >= 2:
+                        break
+                return {ra["id"] for ra in chosen}
+
+            riders = []
+            order = {"Leider": 0, "Co-leider": 1, "Knecht": 2}
+            for rid in CAREER.teams[tid]["riders"]:
+                rc = by_rider.get(rid, [])
+                role = role_of.get(rid, "Knecht")
+                obj = set(res["objectives"].get(rid, []))
+                peaks = peak_set(res["objectives"].get(rid, [])) if role != "Knecht" else set()
+                recon = CAREER.rider_recon_races(rid)
+                rr = CAREER.riders[rid]
+                races = []
+                for r in sorted(rc, key=lambda x: (CAREER.races[x]["month"], CAREER.races[x]["day"])):
+                    ra = CAREER.races[r]
+                    races.append({"race": r, "name": ra["name"], "day": ra["day"], "month": ra["month"],
+                                  "pop": ra["popularity"], "leader": r in obj,
+                                  "peak": r in peaks, "recon": r in recon})
+                riders.append({"id": rid, "name": CAREER.rider_label(rid), "role": role,
+                               "ability": rr["ability"], "specialty": rr["specialty"],
+                               "days": sum(max(1, CAREER.races[x]["stages"]) for x in rc),
+                               "races": races,
+                               "candidates": calendar_gen.candidates_for(CAREER, tid, rid,
+                                   0.90 if role == "Leider" else 0.83) if role != "Knecht" else []})
+            riders.sort(key=lambda x: (order[x["role"]], -x["ability"]))
+            return self._send(200, {"year": CAREER.season_year(), "riders": riders,
+                                    "camps": CAREER.team_camps(tid), "planned": len(res["plan"])})
         if u.path == "/api/season-apply":
             tid = int(data["team"])
             roles = {"leaders": [int(x) for x in data.get("leaders", [])] or None,

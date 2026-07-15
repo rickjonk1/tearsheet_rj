@@ -289,6 +289,52 @@ button{font-family:inherit;cursor:pointer}
 .planlegend{display:flex;gap:16px;margin-bottom:12px;font-size:11.5px;color:var(--mut)}
 .planlegend i{display:inline-block;width:16px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
 
+/* ---------- planner v2 (clean, grouped, readable) ---------- */
+.pl2-legend{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.pl2-legend .mk{color:var(--txt)}
+.pl2-hint{margin-left:auto;color:var(--mut2)}
+.pl2{min-width:1040px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pl2-head,.pl2-row{display:grid;grid-template-columns:210px repeat(12,minmax(74px,1fr))}
+.pl2-head{position:sticky;top:0;z-index:3;background:var(--panel2);border-bottom:1px solid var(--line2)}
+.pl2-mh{padding:9px 4px;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.05em;
+  color:var(--mut2);border-left:1px solid var(--line)}
+.pl2-mh.camp{color:var(--blue)}
+.pl2-head .pl2-name{padding:9px 12px;font-size:10.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--mut2);position:sticky;left:0;background:var(--panel2)}
+.pl2-sec{display:flex;align-items:center;gap:10px;padding:7px 14px;background:var(--bg2);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:11px;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;position:sticky;left:0}
+.pl2-sec.leader{color:var(--gold)} .pl2-sec.co{color:var(--grn)} .pl2-sec.dom{color:var(--mut)}
+.pl2-seccount{color:var(--mut2);font-weight:700}
+.pl2-toggle{margin-left:auto;color:var(--blue);cursor:pointer;font-weight:600;letter-spacing:.02em;text-transform:none}
+.pl2-row{border-top:1px solid var(--line);min-height:52px;align-items:stretch}
+.pl2-row.dom{opacity:.9}
+.pl2-name{padding:8px 12px;display:flex;flex-direction:column;justify-content:center;gap:2px;
+  position:sticky;left:0;background:var(--bg);border-right:1px solid var(--line2);z-index:1}
+.pl2-rn{font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl2-rm{font-size:10.5px;color:var(--mut)}
+.pl2-acts{display:flex;gap:5px;margin-top:4px}
+.pl2-cell{border-left:1px solid var(--line);padding:4px;display:flex;flex-direction:column;gap:3px}
+.pl2-cell.edit{cursor:pointer}
+.pl2-cell.edit:hover{background:rgba(55,224,139,.06)}
+.chip2{font-size:11px;font-weight:600;padding:3px 7px;border-radius:6px;line-height:1.2;
+  background:var(--panel2);border:1px solid var(--line2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip2.big{background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.4);color:#f5d67a}
+.chip2.lead{box-shadow:inset 2px 0 0 var(--grn)}
+.chip2.camp{background:rgba(91,157,255,.15);border-color:rgba(91,157,255,.45);color:#a9cbff}
+/* popover */
+.cellpop{position:fixed;z-index:90;width:280px;max-height:60vh;overflow-y:auto;background:var(--panel);
+  border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);padding:8px}
+.cp-head{font-size:12px;font-weight:700;color:var(--mut);padding:6px 8px 8px}
+.cp-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:12.5px}
+.cp-row:hover{background:var(--panel2)}
+.cp-row.on{background:rgba(55,224,139,.1)}
+.cp-check{width:14px;color:var(--grn);font-weight:800}
+.cp-nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp-fit{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums}
+.cp-empty{padding:12px 8px;color:var(--mut2);font-size:12px}
+.cp-done{width:100%;margin-top:6px}
+
 /* ---------- vorm & training ---------- */
 .modal-card.wide{width:min(760px,95vw)}
 .tabs{display:flex;gap:6px;margin:4px 0 16px;border-bottom:1px solid var(--line)}
