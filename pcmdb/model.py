@@ -292,33 +292,51 @@ class Career:
             t.set_column(col_name, vals)
 
     # ---- dynamic form: peak windows (DYN_cyclist_fitpeak_history) ----
+    # PCM rules (localstrings 79/80/81/153): a rider has at most TWO fitness peaks,
+    # and they must be >= 10 weeks (70 days) apart.
+    MAX_PEAKS = 2
+    PEAK_MIN_GAP_DAYS = 70
+
     def set_peaks(self, rider_id, target_dates, lead_days=20):
         """Replace a rider's CURRENT-season peak windows so they peak on their
-        target races. target_dates: list of YYYYMMDD ints. Keeps other seasons."""
+        target races. `target_dates` are YYYYMMDD ints in PRIORITY order (most
+        important first). Selects <=2 dates that are >=10 weeks apart. Other
+        seasons are untouched."""
         import datetime
+
+        def to_date(d):
+            try:
+                return datetime.date(d // 10000, (d // 100) % 100, d % 100)
+            except ValueError:
+                return None
+        # greedily pick, by priority, dates that respect the 10-week spacing
+        chosen = []
+        for d in target_dates:
+            dd = to_date(d)
+            if dd is None:
+                continue
+            if all(abs((dd - c).days) >= self.PEAK_MIN_GAP_DAYS for c in chosen):
+                chosen.append(dd)
+            if len(chosen) >= self.MAX_PEAKS:
+                break
+        chosen.sort()
+
         year = self.season_year()
         t = self.db["DYN_cyclist_fitpeak_history"]
-        ids = t.column("IDcyclist_fitpeak_history")
-        cyc = t.column("fkIDcyclist")
-        b = t.column("value_i_date_begin")
-        emin = t.column("value_i_date_end_min")
+        ids = t.column("IDcyclist_fitpeak_history"); cyc = t.column("fkIDcyclist")
+        b = t.column("value_i_date_begin"); emin = t.column("value_i_date_end_min")
         emax = t.column("value_i_date_end_max")
-        # keep rows that are NOT (this rider AND this season)
         keep = [i for i in range(len(ids))
                 if not (cyc[i] == rider_id and b[i] // 10000 == year)]
         nids = [ids[i] for i in keep]; ncyc = [cyc[i] for i in keep]
         nb = [b[i] for i in keep]; nmin = [emin[i] for i in keep]; nmax = [emax[i] for i in keep]
         nxt = (max(ids) + 1) if ids else 1
-        for d in sorted(target_dates):
-            y, m, dd = d // 10000, (d // 100) % 100, d % 100
-            try:
-                end = datetime.date(y, m, dd)
-            except ValueError:
-                continue
+        for end in chosen:
             begin = end - datetime.timedelta(days=lead_days)
             bi = begin.year * 10000 + begin.month * 100 + begin.day
+            di = end.year * 10000 + end.month * 100 + end.day
             nids.append(nxt); ncyc.append(rider_id); nb.append(bi)
-            nmin.append(d); nmax.append(d); nxt += 1
+            nmin.append(di); nmax.append(di); nxt += 1
         t.set_data({"IDcyclist_fitpeak_history": nids, "fkIDcyclist": ncyc,
                     "value_i_date_begin": nb, "value_i_date_end_min": nmin,
                     "value_i_date_end_max": nmax})
@@ -413,10 +431,15 @@ class Career:
         t.set_data({"IDtraining_stage_recon": ids, "fkIDcyclist": cyc, "fkIDstage": stg})
 
     def book_camp(self, team_id, stage_id, start_yyyymmdd, end_yyyymmdd, efficacite=None):
-        """Append a booking row to DYN_training_stage_booking."""
+        """Book a training camp. PCM allows only ONE camp per team (localstrings
+        369), so any existing booking for this team is replaced."""
         t = self.db["DYN_training_stage_booking"]
         data = {c: t.column(c) for c in t.colnames}
-        new_id = (max(data["IDtraining_stage_booking"]) + 1) if t.nrow else 1
+        # drop this team's existing booking(s) — one camp per team
+        keep = [i for i in range(t.nrow) if data["fkIDteam"][i] != team_id]
+        for c in t.colnames:
+            data[c] = [data[c][i] for i in keep]
+        new_id = (max(data["IDtraining_stage_booking"]) + 1) if data["IDtraining_stage_booking"] else 1
         stars = next((c["stars"] for c in self.camps() if c["id"] == stage_id), 3)
         state0 = min(self.db["STA_training_stages_state"].column("IDtraining_stage_state"))
         row = {"IDtraining_stage_booking": new_id, "fkIDtraining_stage": stage_id,

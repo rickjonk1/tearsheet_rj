@@ -219,9 +219,11 @@ class Handler(BaseHTTPRequestHandler):
             if data.get("peaks", True):
                 year = CAREER.season_year()
                 for rider, races in res["objectives"].items():
+                    # priority order (most prestigious first); set_peaks keeps <=2, >=10 weeks apart
                     big = sorted((CAREER.races[r] for r in races),
-                                 key=lambda ra: -ra["popularity"])[:3]
-                    dates = [year * 10000 + ra["month"] * 100 + ra["day"] for ra in big if ra["popularity"] >= 60]
+                                 key=lambda ra: -ra["popularity"])
+                    dates = [year * 10000 + ra["month"] * 100 + ra["day"]
+                             for ra in big if ra["popularity"] >= 55]
                     if dates:
                         CAREER.set_peaks(rider, dates); peaked += 1
             if data.get("save"):
