@@ -85,27 +85,44 @@ def _table(table_id, name, columns):
 # ---------- the synthetic career ----------
 
 def _riders():
-    """16 riders across 2 teams, with deliberately distinct profiles so the
-    planner's route-fit logic has something real to discriminate on."""
+    """A realistically sized squad: 20 riders per team for rosters of at most 8.
+
+    The surplus matters — with a squad the same size as the roster every rider is
+    selected no matter how bad the selection logic is, and tests over squad
+    composition prove nothing. Profiles are deliberately distinct so route fit has
+    something to discriminate on.
+    """
     # (last, first, team, ability, profile) where profile boosts a characteristic
-    people = [
-        ("Bergman", "Jonas", 1, 82.0, "charac_i_mountain"),
-        ("Kassei", "Wout", 1, 80.0, "charac_i_cobble"),
-        ("Sprinter", "Fabio", 1, 78.0, "charac_i_sprint"),
-        ("Chrono", "Filippo", 1, 77.0, "charac_i_timetrial"),
-        ("Heuvel", "Julian", 1, 76.0, "charac_i_hill"),
-        ("Knecht", "Tim", 1, 72.0, None),
-        ("Helper", "Koen", 1, 71.0, None),
-        ("Jonge", "Sam", 1, 70.0, None),
-        ("Montana", "Egan", 2, 81.0, "charac_i_mountain"),
-        ("Pave", "Mathieu", 2, 80.0, "charac_i_cobble"),
-        ("Rapide", "Jasper", 2, 79.0, "charac_i_sprint"),
-        ("Tempo", "Remco", 2, 78.0, "charac_i_timetrial"),
-        ("Punch", "Tadej", 2, 77.0, "charac_i_hill"),
-        ("Gregaar", "Bert", 2, 73.0, None),
-        ("Steun", "Nils", 2, 71.0, None),
-        ("Debut", "Loe", 2, 69.0, None),
+    squad = [
+        ("Bergman", 82.0, "charac_i_mountain"),
+        ("Alpe", 76.0, "charac_i_mountain"),
+        ("Col", 74.0, "charac_i_mountain"),
+        ("Klim", 72.0, "charac_i_mountain"),
+        ("Kassei", 80.0, "charac_i_cobble"),
+        ("Keien", 75.0, "charac_i_cobble"),
+        ("Sprinter", 78.0, "charac_i_sprint"),
+        ("Snel", 73.0, "charac_i_sprint"),
+        ("Chrono", 77.0, "charac_i_timetrial"),
+        ("Uurwerk", 72.0, "charac_i_timetrial"),
+        ("Heuvel", 76.0, "charac_i_hill"),
+        ("Helling", 71.0, "charac_i_hill"),
+        ("Vlakte", 74.0, "charac_i_plain"),
+        ("Rouleur", 70.0, "charac_i_plain"),
+        ("Herstel", 71.0, "charac_i_recuperation"),
+        ("Proloog", 70.0, "charac_i_prologue"),
+        ("Knecht", 69.0, None),
+        ("Helper", 68.0, None),
+        ("Steun", 67.0, None),
+        ("Jonge", 66.0, None),
     ]
+    firsts = ["Jonas", "Wout", "Fabio", "Filippo", "Julian", "Tim", "Koen", "Sam",
+              "Egan", "Mathieu", "Jasper", "Remco", "Tadej", "Bert", "Nils", "Loe",
+              "Primoz", "Mads", "Biniam", "Kasper"]
+    people = []
+    for team, suffix in ((1, ""), (2, "sen")):
+        for i, (last, ability, prof) in enumerate(squad):
+            people.append((last + suffix, firsts[i], team,
+                           ability - (0.5 if team == 2 else 0.0), prof))
     n = len(people)
     cols = {
         "IDcyclist": list(range(1, n + 1)),
@@ -157,6 +174,8 @@ RACES = [
     (4, "Giro d'Italia", 1, 1, 88.0, 8, 5, 21),
     (5, "Tour de France", 1, 1, 95.0, 4, 7, 21),
     (6, "Ronde van Polen", 2, 1, 58.0, 3, 8, 7),
+    (7, "Ronde van Burgos", 2, 1, 55.0, 29, 7, 5),   # close after the Tour on purpose
+    (8, "Milaan-Sanremo", 1, 3, 74.0, 21, 3, 1),
 ]
 BOTH_TEAMS = [1, 2]
 
@@ -239,7 +258,7 @@ def build_tree():
         ("gene_ilist_roster", cdb.DT_INT_LIST, [[] for _ in pairs]),
     ])
 
-    nrid = 16
+    nrid = 40                      # 2 teams x 20 riders
     add("DYN_cyclist_fitness", [
         ("IDcyclist", cdb.DT_INT, list(range(1, nrid + 1))),
         ("value_f_FIT", cdb.DT_FLOAT, [70.0] * nrid),

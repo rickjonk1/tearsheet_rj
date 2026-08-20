@@ -10,7 +10,7 @@ question these tests deliberately do not claim to answer.
 """
 import pytest
 
-from conftest import reload_career
+from conftest import race_id, reload_career, rider_id
 from pcmdb import calendar_gen
 
 YEAR = 2030
@@ -189,16 +189,16 @@ def test_set_frame_archetype_round_trips(career, tmp_path):
 
 # ---------- planner: route fit ----------
 
-def test_a_climber_is_never_offered_the_cobbled_classics(career):
+def test_a_climber_is_never_offered_the_cobbled_classics(career, climber):
     """The property the whole planner rests on: candidates are gated on profile."""
-    names = {c["name"] for c in calendar_gen.candidates_for(career, 1, 1)}
+    names = {c["name"] for c in calendar_gen.candidates_for(career, 1, climber)}
     assert "Paris-Roubaix" not in names
     assert "Ronde van Vlaanderen" not in names
     assert "Tour de France" in names
 
 
-def test_a_cobbler_is_offered_the_cobbled_classics(career):
-    names = {c["name"] for c in calendar_gen.candidates_for(career, 1, 2)}
+def test_a_cobbler_is_offered_the_cobbled_classics(career, cobbler):
+    names = {c["name"] for c in calendar_gen.candidates_for(career, 1, cobbler)}
     assert {"Paris-Roubaix", "Ronde van Vlaanderen"} <= names
     assert "Tour de France" not in names
 

@@ -49,8 +49,61 @@ def _overlaps(busy_list, start, end, rest_days):
     return any(not (end < s - rest_days or start > e + rest_days) for s, e in busy_list)
 
 
+def _window_overload(busy_list, start, end, window, cap):
+    """True if racing [start, end] would push a rider over `cap` race days inside
+    any rolling `window`-day span.
+
+    Rest days alone only separate *neighbouring* races, so without this a rider
+    could stack a grand tour and another stage race back to back and still look
+    legal. This is what keeps a season spread out instead of front-loaded.
+    """
+    if cap <= 0:
+        return False
+    days = set()
+    for s, e in busy_list:
+        days.update(range(s, e + 1))
+    days.update(range(start, end + 1))
+    # only windows touching the new race can newly break the cap
+    for w0 in range(start - window + 1, end + 1):
+        if sum(1 for d in days if w0 <= d < w0 + window) > cap:
+            return True
+    return False
+
+
+def _slot_profile(career, race, n_slots):
+    """Return one characteristic per open roster slot, split over the race's own
+    discipline weights.
+
+    A race already declares what it demands (mountain 5, sprint 1, time-trial 2...).
+    Handing every slot to the best overall fit gives eight climbers at the Tour;
+    dividing the slots by those weights instead yields the mix the route actually
+    needs — climbers for the cols, a sprinter for the flat days, a rouleur to pull.
+    """
+    from .model import WEIGHT_TO_CHARAC
+    if n_slots <= 0:
+        return []
+    pairs = [(WEIGHT_TO_CHARAC[k], v) for k, v in (race["weights"] or {}).items()
+             if k in WEIGHT_TO_CHARAC and v > 0]
+    if not pairs:
+        return []
+    total = sum(v for _, v in pairs)
+    exact = [(c, n_slots * v / total) for c, v in pairs]
+    counts = {c: int(e) for c, e in exact}
+    # hand out what integer division dropped, biggest fractional part first
+    leftovers = sorted(((e - int(e)), c) for c, e in exact)
+    while sum(counts.values()) < n_slots and leftovers:
+        counts[leftovers.pop()[1]] += 1
+    demand = dict(pairs)
+    out = []
+    for c, n in counts.items():
+        out += [c] * n
+    out.sort(key=lambda c: -demand[c])   # fill the most-demanded slots first
+    return out
+
+
 def generate(career: Career, seed=1, teams=None, variety=0.12, rest_days=2,
-             leader_budget=62, dom_budget=85, roles=None, wt_prestige=45):
+             leader_budget=62, dom_budget=85, roles=None, wt_prestige=45,
+             window_days=30, window_cap=23):
     """
     Role-based, route-aware season generation.
 
@@ -111,21 +164,27 @@ def generate(career: Career, seed=1, teams=None, variety=0.12, rest_days=2,
                         continue
                     if _overlaps(busy[cap], s, e, rest_days):
                         continue
+                    if _window_overload(busy[cap], s, e, window_days, window_cap):
+                        continue
                     busy[cap].append((s, e)); spent[cap] += days
                     captains_of.setdefault(r["id"], []).append(cap)
                     objectives.setdefault(cap, []).append(r["id"])
 
         # --- pass 2: fill helpers by route fit ---
         plan = _fill_helpers(career, pool, races, race_by_id, leaders, captains_of,
-                             busy, spent, rng, rest_days, leader_budget, dom_budget, wt_prestige)
+                             busy, spent, rng, rest_days, leader_budget, dom_budget,
+                             wt_prestige, window_days, window_cap)
         result[tid] = {"plan": plan, "objectives": objectives,
                        "roles": {"leaders": leaders, "coleaders": coleaders, "domestiques": doms}}
     return result
 
 
 def _fill_helpers(career, pool, races, race_by_id, leaders, captains_of, busy, spent,
-                  rng, rest_days, leader_budget, dom_budget, wt_prestige):
-    """Fill every captained (and big) race to roster size with route-fit domestiques."""
+                  rng, rest_days, leader_budget, dom_budget, wt_prestige,
+                  window_days=30, window_cap=23):
+    """Fill every captained (and big) race to roster size with a squad shaped by
+    the route: slots are split over the race's discipline weights, then each slot
+    goes to the best available rider for THAT characteristic."""
     field = set(captains_of)
     for r in races:
         if r["popularity"] >= wt_prestige:
@@ -138,7 +197,8 @@ def _fill_helpers(career, pool, races, race_by_id, leaders, captains_of, busy, s
         lo, hi = career.class_limits.get(r["klass"], (6, 7))
         caps = list(captains_of.get(rid_, []))
         roster = list(caps)
-        cand = []
+
+        available = []
         for rid2 in pool:
             if rid2 in roster:
                 continue
@@ -146,13 +206,32 @@ def _fill_helpers(career, pool, races, race_by_id, leaders, captains_of, busy, s
                 continue
             if _overlaps(busy[rid2], s, e, rest_days):
                 continue
-            fit = career.race_fit(rid2, rid_)
-            cand.append(((fit + career.riders[rid2]["ability"] * 0.3) * rng.jitter(0.08), fit, rid2))
-        cand.sort(reverse=True)
-        for _, _, rid2 in cand:
-            if len(roster) >= hi:
+            if _window_overload(busy[rid2], s, e, window_days, window_cap):
+                continue
+            available.append(rid2)
+
+        # one slot per discipline the route demands, strongest demand first
+        for charac in _slot_profile(career, r, hi - len(roster)):
+            if not available or len(roster) >= hi:
                 break
-            roster.append(rid2)
+            best, best_score = None, None
+            for rid2 in available:
+                score = (career.riders[rid2]["charac"].get(charac, 0)
+                         + career.race_fit(rid2, rid_) * 0.4
+                         + career.riders[rid2]["ability"] * 0.2) * rng.jitter(0.08)
+                if best_score is None or score > best_score:
+                    best, best_score = rid2, score
+            roster.append(best)
+            available.remove(best)
+
+        # top up to the minimum with the best overall fit if the route split fell short
+        if len(roster) < lo:
+            rest = sorted(available, key=lambda x: -(
+                career.race_fit(x, rid_) + career.riders[x]["ability"] * 0.3))
+            for rid2 in rest:
+                if len(roster) >= lo:
+                    break
+                roster.append(rid2)
         if len(roster) < lo:
             continue
         for rid2 in roster:
@@ -182,7 +261,8 @@ def candidates_for(career: Career, team_id, rider_id, gate_frac=0.85):
 
 
 def build_from_captains(career: Career, team_id, captain_races, roles=None, seed=1,
-                        rest_days=2, leader_budget=62, dom_budget=85, wt_prestige=45):
+                        rest_days=2, leader_budget=62, dom_budget=85, wt_prestige=45,
+                        window_days=30, window_cap=23):
     """Build a plan from an EXPLICIT per-captain race selection (the edited timeline).
 
     captain_races: {rider_id: [race_id, ...]}. Fills helpers by route fit around it.
@@ -211,7 +291,8 @@ def build_from_captains(career: Career, team_id, captain_races, roles=None, seed
             captains_of.setdefault(rid_, []).append(cap)
             objectives.setdefault(cap, []).append(rid_)
     plan = _fill_helpers(career, pool, races, race_by_id, leaders, captains_of,
-                         busy, spent, rng, rest_days, leader_budget, dom_budget, wt_prestige)
+                         busy, spent, rng, rest_days, leader_budget, dom_budget,
+                         wt_prestige, window_days, window_cap)
     return {"plan": plan, "objectives": objectives,
             "roles": {"leaders": leaders, "coleaders": coleaders, "domestiques": doms}}
 
