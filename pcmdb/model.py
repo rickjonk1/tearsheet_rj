@@ -141,21 +141,21 @@ class Career:
         return [self._obj_race[i] for i in range(len(self._obj_cyc)) if self._obj_cyc[i] == rider_id]
 
     def toggle_objective(self, rider_id, race_id):
-        """Add/remove a rider's objective for a race; rebuilds DYN_cyclist_objective."""
-        ids, cyc, rac = self._obj_id, self._obj_cyc, self._obj_race
-        keep = [i for i in range(len(ids)) if not (cyc[i] == rider_id and rac[i] == race_id)]
-        if len(keep) == len(ids):                      # not present -> add
-            new_id = (max(ids) + 1) if ids else 1
-            ids.append(new_id); cyc.append(rider_id); rac.append(race_id)
-            added = True
-        else:                                          # present -> remove
-            ids[:] = [ids[i] for i in keep]
-            cyc[:] = [cyc[i] for i in keep]
-            rac[:] = [rac[i] for i in keep]
-            added = False
-        self.db["DYN_cyclist_objective"].set_data({
-            "IDcyclist_objective": ids, "fkIDcyclist": cyc, "fkIDrace": rac})
-        return added
+        """Add/remove a rider's objective for a race. Any column the real table
+        carries beyond our three is preserved."""
+        t = self.db["DYN_cyclist_objective"]
+        cyc, rac = self._obj_cyc, self._obj_race
+        present = any(cyc[i] == rider_id and rac[i] == race_id for i in range(t.nrow))
+        if present:
+            t.rewrite(keep=lambda i: not (cyc[i] == rider_id and rac[i] == race_id))
+        else:
+            t.rewrite(add=[{"IDcyclist_objective": t.next_id("IDcyclist_objective"),
+                            "fkIDcyclist": rider_id, "fkIDrace": race_id}])
+        # re-read: the column lists we cached are stale after a rewrite
+        self._obj_id = t.column("IDcyclist_objective")
+        self._obj_cyc = t.column("fkIDcyclist")
+        self._obj_race = t.column("fkIDrace")
+        return not present
 
     # ---- fit scoring ----
     def race_fit(self, rider_id, race_id):
@@ -358,23 +358,18 @@ class Career:
 
         year = self.season_year()
         t = self.db["DYN_cyclist_fitpeak_history"]
-        ids = t.column("IDcyclist_fitpeak_history"); cyc = t.column("fkIDcyclist")
-        b = t.column("value_i_date_begin"); emin = t.column("value_i_date_end_min")
-        emax = t.column("value_i_date_end_max")
-        keep = [i for i in range(len(ids))
-                if not (cyc[i] == rider_id and b[i] // 10000 == year)]
-        nids = [ids[i] for i in keep]; ncyc = [cyc[i] for i in keep]
-        nb = [b[i] for i in keep]; nmin = [emin[i] for i in keep]; nmax = [emax[i] for i in keep]
-        nxt = (max(ids) + 1) if ids else 1
-        for end in chosen:
-            begin = end - datetime.timedelta(days=lead_days)
-            bi = begin.year * 10000 + begin.month * 100 + begin.day
-            di = end.year * 10000 + end.month * 100 + end.day
-            nids.append(nxt); ncyc.append(rider_id); nb.append(bi)
-            nmin.append(di); nmax.append(di); nxt += 1
-        t.set_data({"IDcyclist_fitpeak_history": nids, "fkIDcyclist": ncyc,
-                    "value_i_date_begin": nb, "value_i_date_end_min": nmin,
-                    "value_i_date_end_max": nmax})
+        cyc = t.column("fkIDcyclist"); beg = t.column("value_i_date_begin")
+        nxt = t.next_id("IDcyclist_fitpeak_history")
+        add = []
+        for n, end in enumerate(chosen):
+            start = end - datetime.timedelta(days=lead_days)
+            add.append({"IDcyclist_fitpeak_history": nxt + n,
+                        "fkIDcyclist": rider_id,
+                        "value_i_date_begin": start.year * 10000 + start.month * 100 + start.day,
+                        "value_i_date_end_min": end.year * 10000 + end.month * 100 + end.day,
+                        "value_i_date_end_max": end.year * 10000 + end.month * 100 + end.day})
+        # replace only THIS rider's THIS season; other riders and past seasons survive
+        t.rewrite(keep=lambda i: not (cyc[i] == rider_id and beg[i] // 10000 == year), add=add)
 
     # ---- training camps (STA_training_stages / DYN_training_stage_booking) ----
     def camps(self, month=None):
@@ -452,39 +447,47 @@ class Career:
         _, r2s = self._stage_race_maps()
         stages = set(r2s.get(race_id, []))
         t = self.db["DYN_training_stage_recon"]
-        ids = t.column("IDtraining_stage_recon")
         cyc = t.column("fkIDcyclist"); stg = t.column("fkIDstage")
         if on:
-            have = {stg[i] for i in range(len(ids)) if cyc[i] == rider_id}
-            nxt = (max(ids) + 1) if ids else 1
-            for s in stages:
-                if s not in have:
-                    ids.append(nxt); cyc.append(rider_id); stg.append(s); nxt += 1
+            have = {stg[i] for i in range(t.nrow) if cyc[i] == rider_id}
+            nxt = t.next_id("IDtraining_stage_recon")
+            add = [{"IDtraining_stage_recon": nxt + n, "fkIDcyclist": rider_id, "fkIDstage": st}
+                   for n, st in enumerate(sorted(stages - have))]
+            t.rewrite(add=add)
         else:
-            keep = [i for i in range(len(ids)) if not (cyc[i] == rider_id and stg[i] in stages)]
-            ids[:] = [ids[i] for i in keep]; cyc[:] = [cyc[i] for i in keep]; stg[:] = [stg[i] for i in keep]
-        t.set_data({"IDtraining_stage_recon": ids, "fkIDcyclist": cyc, "fkIDstage": stg})
+            t.rewrite(keep=lambda i: not (cyc[i] == rider_id and stg[i] in stages))
 
     def book_camp(self, team_id, stage_id, start_yyyymmdd, end_yyyymmdd, efficacite=None):
         """Book a training camp. PCM allows only ONE camp per team (localstrings
         369), so any existing booking for this team is replaced."""
         t = self.db["DYN_training_stage_booking"]
-        data = {c: t.column(c) for c in t.colnames}
-        # drop this team's existing booking(s) — one camp per team
-        keep = [i for i in range(t.nrow) if data["fkIDteam"][i] != team_id]
-        for c in t.colnames:
-            data[c] = [data[c][i] for i in keep]
-        new_id = (max(data["IDtraining_stage_booking"]) + 1) if data["IDtraining_stage_booking"] else 1
-        stars = next((c["stars"] for c in self.camps() if c["id"] == stage_id), 3)
-        state0 = min(self.db["STA_training_stages_state"].column("IDtraining_stage_state"))
+        team = t.column("fkIDteam")
+        new_id = t.next_id("IDtraining_stage_booking")
         row = {"IDtraining_stage_booking": new_id, "fkIDtraining_stage": stage_id,
                "gene_i_start_date": start_yyyymmdd, "gene_i_end_date": end_yyyymmdd,
-               "fkIDteam": team_id, "fkIDstate": state0,
-               "value_i_efficacite": efficacite if efficacite is not None else stars * 20}
-        for c in t.colnames:
-            data[c].append(row.get(c, 0))
-        t.set_data(data)
+               "fkIDteam": team_id, "fkIDstate": self.booking_state_booked()}
+        if efficacite is not None:
+            row["value_i_efficacite"] = efficacite
+        row = {k: v for k, v in row.items() if k in t.colnames}
+        # one camp per team: drop this team's existing booking, keep everyone else's
+        t.rewrite(keep=lambda i: team[i] != team_id, add=[row])
         return new_id
+
+    def booking_state_booked(self):
+        """The state id a freshly booked camp should carry.
+
+        Look it up by its CONSTANT name — taking the lowest id is a guess, and if
+        the shipped table happens to start at CANCELLED every camp we write would
+        land in a dead state."""
+        t = self.db["STA_training_stages_state"]
+        ids = t.column("IDtraining_stage_state")
+        if "CONSTANT" in t.colnames:
+            names = t.column("CONSTANT")
+            for want in ("BOOKED", "RESERVED", "PLANNED", "TODO", "WAITING"):
+                for i, n in enumerate(names):
+                    if want in str(n).upper():
+                        return ids[i]
+        return min(ids) if ids else 0
 
     # ---- bike balance (STA_equipment_template frame archetypes) ----
     FRAME_LABELS = {"plain": "Aero (vlak/sprint)", "mountain": "Bergfiets (klim)",

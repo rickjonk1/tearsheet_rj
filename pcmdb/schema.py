@@ -146,6 +146,51 @@ class Table:
         for c in self.cols:
             self.set_column(c.desc, columns[c.desc])
 
+    def blank(self, name):
+        """A type-correct empty value for a column we know nothing about."""
+        dt = self.coltype(next(c for c in self.cols if c.desc == name))
+        if dt == cdb.DT_STRING:
+            return ""
+        if dt in (cdb.DT_INT_LIST, cdb.DT_FLOAT_LIST):
+            return []
+        if dt == cdb.DT_FLOAT:
+            return 0.0
+        if dt == cdb.DT_BOOL:
+            return False
+        return 0
+
+    def rewrite(self, keep=None, add=None):
+        """Rebuild the table from a row filter plus new rows, WITHOUT needing to
+        know every column.
+
+        The real game database has columns we have never seen. Writers that spell
+        out a full column dict either drop those columns (KeyError) or shove a 0
+        into them — and a 0 in a list column raises. This reads whatever is
+        actually there, keeps the rows you want, and fills anything you did not
+        mention with a type-correct blank.
+
+        keep: predicate(row_index) -> bool   (default: keep everything)
+        add:  list of {column: value} dicts  (missing columns get blanks)
+        """
+        data = {c.desc: _decode_column(c, self.nrow) for c in self.cols}
+        if keep is not None:
+            idx = [i for i in range(self.nrow) if keep(i)]
+            data = {k: [v[i] for i in idx] for k, v in data.items()}
+        for row in (add or []):
+            unknown = set(row) - set(data)
+            if unknown:
+                raise KeyError("no such column(s) in %s: %s" % (self.name, sorted(unknown)))
+            for name in data:
+                data[name].append(row[name] if name in row else self.blank(name))
+        self.set_data(data)
+        return self.nrow
+
+    def next_id(self, name=None):
+        """Next free primary key (the first column, unless told otherwise)."""
+        name = name or self.colnames[0]
+        vals = self.column(name)
+        return (max(vals) + 1) if vals else 1
+
     def rows(self, limit=None):
         n = self.nrow if limit is None else min(limit, self.nrow)
         data = {c.desc: _decode_column(c, self.nrow) for c in self.cols}

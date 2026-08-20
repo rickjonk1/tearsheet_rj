@@ -215,14 +215,23 @@ def _race_type_rows():
     return cols
 
 
-def build_tree():
-    """Assemble the whole synthetic database as a chunk tree."""
+def build_tree(extra_columns=None):
+    """Assemble the whole synthetic database as a chunk tree.
+
+    extra_columns: {table_name: [(colname, dtype, default), ...]} — columns the
+    REAL game database has and we have never seen. Used to prove our writers
+    preserve what they do not understand instead of zeroing or crashing on it.
+    """
+    extra_columns = extra_columns or {}
     tables = []
     tid = 0
 
     def add(name, columns):
         nonlocal tid
         tid += 1
+        nrow = len(columns[0][2]) if columns else 0
+        for cname, dtype, default in extra_columns.get(name, []):
+            columns = list(columns) + [(cname, dtype, [default] * nrow)]
         tables.append(_table(tid, name, columns))
 
     add("STA_stage", _stage_rows())
@@ -331,7 +340,7 @@ def build_tree():
     return _container(cdb.WRAPPER, [flags, tables_chunk])
 
 
-def write(path):
+def write(path, extra_columns=None):
     """Write the synthetic career to `path` and return it."""
-    cdb.save(str(path), build_tree())
+    cdb.save(str(path), build_tree(extra_columns))
     return str(path)

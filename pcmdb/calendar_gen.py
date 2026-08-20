@@ -328,16 +328,16 @@ def _apply_objectives(career: Career, obj_by_rider):
     """Rebuild DYN_cyclist_objective from generated captain->races objectives,
     replacing objectives for the involved riders."""
     t = career.db["DYN_cyclist_objective"]
-    ids = t.column("IDcyclist_objective")
     cyc = t.column("fkIDcyclist")
-    rac = t.column("fkIDrace")
     involved = set(obj_by_rider)
-    keep = [i for i in range(len(ids)) if cyc[i] not in involved]
-    nids = [ids[i] for i in keep]
-    ncyc = [cyc[i] for i in keep]
-    nrac = [rac[i] for i in keep]
-    nxt = (max(ids) + 1) if ids else 1
+    nxt = t.next_id("IDcyclist_objective")
+    add = []
     for rider, races in obj_by_rider.items():
         for r in races:
-            nids.append(nxt); ncyc.append(rider); nrac.append(r); nxt += 1
-    t.set_data({"IDcyclist_objective": nids, "fkIDcyclist": ncyc, "fkIDrace": nrac})
+            add.append({"IDcyclist_objective": nxt, "fkIDcyclist": rider, "fkIDrace": r})
+            nxt += 1
+    # only the riders we planned lose their old objectives; everyone else keeps theirs
+    t.rewrite(keep=lambda i: cyc[i] not in involved, add=add)
+    career._obj_id = t.column("IDcyclist_objective")
+    career._obj_cyc = t.column("fkIDcyclist")
+    career._obj_race = t.column("fkIDrace")
