@@ -43,6 +43,14 @@ editor 340px (the rail serves, the editor is a peer of the calendar).
 `--r-mark 2px` (dossards) · `--r-ctl 3px` (buttons/inputs) · `--r-card 6px`
 (panels) · `--r-sheet 10px` (overlays). Never large radius on small elements.
 
+## Structure — views, not stacked modals
+Four views behind a top nav (Kalender / Seizoen / Vorm / Materiaal), with the team
+rail always present as context. Everything about one subject lives on one page:
+Seizoen holds roles + load + the year planner; Vorm holds the mechanics, camps and
+per-rider condition. Overlays are reserved for genuinely transient things — the
+cell popover and first-run onboarding. Sections within a page are collapsible
+`<details class="panel">` with a mono uppercase title and a meta summary.
+
 ## Signature elements (must appear)
 1. **Dossard** — a rider's race number in a bordered mono box; the leader carries 1.
    Replaces avatars/initials entirely.

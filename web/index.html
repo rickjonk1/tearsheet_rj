@@ -17,23 +17,26 @@
         <path d="M8 23 L18 12" class="frame"/>
       </svg>
       <div class="brandtext">
-        <strong>PELOTON</strong>
-        <span>Seizoensroadbook</span>
+        <strong>Roadbook</strong>
+        <span id="brandTeam">Seizoensplanner</span>
       </div>
     </div>
-    <div class="topmeta" id="topmeta"></div>
+
+    <nav class="nav" id="nav">
+      <button class="navbtn on" data-view="kalender">Kalender</button>
+      <button class="navbtn"    data-view="seizoen">Seizoen</button>
+      <button class="navbtn"    data-view="vorm">Vorm</button>
+      <button class="navbtn"    data-view="materiaal">Materiaal</button>
+    </nav>
+
     <div class="topactions">
+      <span class="topmeta" id="topmeta"></span>
       <button class="btn ghost" id="btnOpen" hidden>Openen</button>
-      <button class="btn ghost" id="btnSetup">Seizoen opzetten</button>
-      <button class="btn ghost" id="btnForm">Vorm</button>
-      <button class="btn ghost" id="btnBikes">Materiaal</button>
-      <button class="btn ghost" id="btnLoad">Belasting</button>
-      <button class="btn ghost" id="btnGenerate">Kalender</button>
       <button class="btn primary" id="btnSave">Opslaan</button>
     </div>
   </header>
 
-  <main class="layout">
+  <main class="shell">
     <aside class="rail">
       <div class="rail-section">
         <label class="rail-label">Ploeg</label>
@@ -43,150 +46,149 @@
       <div class="rail-section" id="teamCard"></div>
     </aside>
 
-    <section class="board">
-      <div class="board-head">
-        <div>
-          <h1 id="boardTitle">Kies een ploeg</h1>
-          <p class="sub" id="boardSub">1 januari · start van het seizoen</p>
+    <!-- ============ kalender: koersen en selecties ============ -->
+    <section class="view on" id="view-kalender">
+      <div class="split">
+        <div class="col-main">
+          <div class="board-head">
+            <div>
+              <h1 id="boardTitle">Kies een ploeg</h1>
+              <p class="sub" id="boardSub">1 januari · start van het seizoen</p>
+            </div>
+            <div class="seasonstats" id="seasonStats"></div>
+          </div>
+          <div id="calendar" class="calendar"></div>
         </div>
-        <div class="seasonstats" id="seasonStats"></div>
+        <aside class="col-side" id="editor">
+          <div class="editor-empty" id="editorEmpty">
+            <div class="editor-empty-inner">
+              <svg class="hint-icon" width="86" height="26" viewBox="0 0 86 26" aria-hidden="true">
+                <polyline points="0,22 10,19 18,9 26,15 34,4 44,12 52,6 62,17 72,11 86,20"
+                  fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+              </svg>
+              <p>Kies een koers om de selectie samen te stellen.</p>
+            </div>
+          </div>
+          <div class="editor-body" id="editorBody" hidden></div>
+        </aside>
       </div>
-      <div id="calendar" class="calendar"></div>
     </section>
 
-    <aside class="editor" id="editor">
-      <div class="editor-empty" id="editorEmpty">
-        <div class="editor-empty-inner">
-          <svg class="hint-icon" width="86" height="26" viewBox="0 0 86 26" aria-hidden="true">
-            <polyline points="0,22 10,19 18,9 26,15 34,4 44,12 52,6 62,17 72,11 86,20"
-              fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-          </svg>
-          <p>Selecteer een koers om de selectie samen te stellen.</p>
+    <!-- ============ seizoen: rollen + planner + belasting ============ -->
+    <section class="view" id="view-seizoen">
+      <div class="page">
+        <div class="pagehead">
+          <div>
+            <h1>Seizoen</h1>
+            <p class="sub" id="seizoenSub">Rollen, doelkoersen en belasting</p>
+          </div>
+          <div class="pagehead-actions">
+            <button class="btn" id="plGenerate">Voorstel genereren</button>
+            <button class="btn primary" id="plApply">Toepassen &amp; opslaan</button>
+          </div>
         </div>
+
+        <details class="panel" id="rolesPanel" open>
+          <summary><span class="panel-title">Rollen</span>
+            <span class="panel-meta" id="rolesMeta"></span></summary>
+          <div class="panel-body">
+            <p class="note">Kies je kopmannen (max 3) en co-leiders — klik een renner om zijn rol
+              te wisselen. Hun doelkoersen bepalen de vormpieken; knechten worden per koers op het
+              routeprofiel gekozen.</p>
+            <div id="roleList" class="rolelist"></div>
+          </div>
+        </details>
+
+        <details class="panel" id="loadPanel">
+          <summary><span class="panel-title">Belasting</span>
+            <span class="panel-meta" id="loadMeta"></span></summary>
+          <div class="panel-body"><div id="loadTable" class="loadtable"></div></div>
+        </details>
+
+        <div class="sectionrule"><span>Jaarplanner</span></div>
+        <div id="setupPlanner" class="plannerwrap"></div>
+        <div class="pagefoot"><span class="setup-info" id="setupInfo"></span></div>
       </div>
-      <div class="editor-body" id="editorBody" hidden></div>
-    </aside>
+    </section>
+
+    <!-- ============ vorm: conditie, pieken en kampen ============ -->
+    <section class="view" id="view-vorm">
+      <div class="page">
+        <div class="pagehead">
+          <div>
+            <h1>Vorm</h1>
+            <p class="sub">Conditie, vormpieken en trainingskampen</p>
+          </div>
+        </div>
+
+        <details class="panel" open>
+          <summary><span class="panel-title">Hoe vorm werkt</span>
+            <span class="panel-meta">volgens de game zelf</span></summary>
+          <div class="panel-body"><div class="explain" id="formExplain"></div></div>
+        </details>
+
+        <details class="panel" open>
+          <summary><span class="panel-title">Trainingskamp</span>
+            <span class="panel-meta" id="campMeta"></span></summary>
+          <div class="panel-body">
+            <p class="note">Eén kamp per ploeg — een nieuwe boeking vervangt de vorige. Plan hem
+              zo dat hij ruim vóór een doelkoers eindigt.</p>
+            <div class="campbook">
+              <select id="campSelect" class="search"></select>
+              <input id="campStart" class="search" placeholder="Start dd/mm">
+              <input id="campEnd" class="search" placeholder="Eind dd/mm">
+              <button class="btn primary" id="campBook">Boeken</button>
+            </div>
+            <div id="campList" class="camplist"></div>
+          </div>
+        </details>
+
+        <details class="panel" open>
+          <summary><span class="panel-title">Conditie per renner</span>
+            <span class="panel-meta" id="formMeta"></span></summary>
+          <div class="panel-body">
+            <div class="bulkbar">
+              <button class="btn" id="bulkFresh">Iedereen fris &amp; hersteld</button>
+              <button class="btn" id="bulkPeak">Iedereen in piekvorm</button>
+            </div>
+            <div class="tablehead formrow">
+              <span>Renner</span><span>Frisheid</span><span>Vermoeidheid</span><span>Voorbereiding</span>
+            </div>
+            <div id="formList" class="formlist"></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============ materiaal ============ -->
+    <section class="view" id="view-materiaal">
+      <div class="page">
+        <div class="pagehead">
+          <div>
+            <h1>Materiaal</h1>
+            <p class="sub">De balans tussen aero en klim</p>
+          </div>
+          <div class="pagehead-actions">
+            <button class="btn" id="bikeRebalance">Balanceer aero ↔ berg</button>
+            <button class="btn primary" id="bikeSave">Opslaan</button>
+          </div>
+        </div>
+        <p class="note">Elk frame geeft <b>aero</b>, <b>gewicht</b> en <b>comfort</b> (0–3).
+          Standaard is de allroundfiets een strikte upgrade van de bergfiets, dus kiest iedereen
+          aero. Schrijft naar <code>STA_equipment_template</code>.
+          <span class="exp">Test dit in de game.</span></p>
+        <div class="tablehead bikerow">
+          <span>Frame</span><span>Aero</span><span>Gewicht</span><span>Comfort</span>
+        </div>
+        <div id="bikeList" class="bikelist"></div>
+      </div>
+    </section>
   </main>
 
-  <div class="wizard" id="wizard" hidden>
+  <div class="modal" id="wizard" hidden>
     <div class="wiz-card">
       <div class="wiz-steps" id="wizSteps"></div>
       <div class="wiz-body" id="wizBody"></div>
-    </div>
-  </div>
-
-  <div class="modal" id="genModal" hidden>
-    <div class="modal-card">
-      <div class="modal-head">
-        <h2>Realistische kalender genereren</h2>
-        <button class="iconbtn" id="genClose">×</button>
-      </div>
-      <p class="modal-sub">Verdeelt de renners van deze ploeg over hun koersen op basis van
-        specialiteit, niveau en belasting. Elke seed geeft een ander, realistisch seizoen.</p>
-      <div class="genctrls">
-        <label>Seed <input type="number" id="genSeed" value="7" min="1"></label>
-        <label>Variatie <input type="range" id="genVariety" min="0" max="40" value="15"><span id="genVarietyVal">15%</span></label>
-      </div>
-      <div class="genactions">
-        <button class="btn ghost" id="genPreview">Voorbeeld</button>
-        <button class="btn primary" id="genApply">Deze ploeg</button>
-        <button class="btn gold" id="genAll">Alle ploegen</button>
-      </div>
-      <div id="genResult" class="genresult"></div>
-    </div>
-  </div>
-
-  <div class="setup" id="setupModal" hidden>
-    <div class="setup-head">
-      <div style="flex:1;min-width:0">
-        <div class="setup-kicker" id="setupPhaseLabel">Stap 1 · Rollen</div>
-        <h2 id="setupTitle">Seizoen opzetten</h2>
-      </div>
-      <button class="iconbtn" id="setupClose">×</button>
-    </div>
-    <div class="setup-body">
-      <div id="setupRoles">
-        <p class="modal-sub">Kies je kopmannen (max 3), dan je co-leiders. De rest wordt knecht.
-          Klik op een renner om zijn rol te wisselen. De planner bouwt hun schema op basis van
-          hun specialiteiten; knechten worden per koers gekozen op het routeprofiel.</p>
-        <div class="rolelegend">
-          <span><i class="rl leader"></i> Kopman</span>
-          <span><i class="rl co"></i> Co-leider</span>
-          <span><i class="rl dom"></i> Knecht</span>
-        </div>
-        <div id="roleList" class="rolelist"></div>
-      </div>
-      <div id="setupPlanner" hidden></div>
-    </div>
-    <div class="setup-foot">
-      <div id="setupInfo" class="setup-info"></div>
-      <div class="setup-actions" id="setupActions"></div>
-    </div>
-  </div>
-
-  <div class="modal" id="formModal" hidden>
-    <div class="modal-card wide">
-      <div class="modal-head">
-        <h2>Vorm &amp; Training</h2>
-        <button class="iconbtn" id="formClose">×</button>
-      </div>
-      <div class="tabs">
-        <button class="tab on" data-tab="vorm">Vorm &amp; vermoeidheid</button>
-        <button class="tab" data-tab="kampen">Trainingskampen</button>
-      </div>
-      <div id="tabVorm" class="tabpane">
-        <p class="modal-sub">Vorm wordt <b>dynamisch bepaald door je seizoensplanning</b>: bij
-          <b>Seizoen opzetten</b> krijgt elke kopman automatisch een <span style="color:var(--pois)">▲ vormpiek</span>
-          rond zijn 3 grootste doelkoersen (geschreven naar <code>DYN_cyclist_fitpeak_history</code>).
-          Hieronder de huidige waarden per renner; gebruik de knoppen alleen voor een handmatige reset.</p>
-        <div class="bulkbar">
-          <button class="btn ghost" id="bulkFresh">Iedereen fris &amp; hersteld</button>
-          <button class="btn gold" id="bulkPeak">Iedereen in piekvorm</button>
-        </div>
-        <div id="formList" class="formlist"></div>
-      </div>
-      <div id="tabKampen" class="tabpane" hidden>
-        <p class="modal-sub">Boek trainingskampen (o.a. hoogtestages) voor je ploeg.
-          <span class="exp">Experimenteel — test de save in de game.</span></p>
-        <div class="campbook">
-          <select id="campSelect" class="search"></select>
-          <input id="campStart" class="search" placeholder="Start (dd/mm)">
-          <input id="campEnd" class="search" placeholder="Eind (dd/mm)">
-          <button class="btn primary" id="campBook">Boeken</button>
-        </div>
-        <div id="campList" class="camplist"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="bikesModal" hidden>
-    <div class="modal-card wide">
-      <div class="modal-head">
-        <h2>Materiaal — aero tegenover klim</h2>
-        <button class="iconbtn" id="bikesClose">×</button>
-      </div>
-      <p class="modal-sub">Elk frame-archetype geeft <b>aero</b>, <b>gewicht (klim)</b> en <b>comfort</b> (0–3).
-        Standaard is de allround-fiets een strikte upgrade van de bergfiets, dus kiest iedereen aero/allround.
-        Pas de waarden aan of gebruik de rebalance zodat elk type zijn eigen terrein heeft.
-        Schrijft naar <code>STA_equipment_template</code>. <span class="exp">Test in-game.</span></p>
-      <div class="bulkbar">
-        <button class="btn gold" id="bikeRebalance">Balanceer aero ↔ berg</button>
-      </div>
-      <div id="bikeList" class="bikelist"></div>
-      <div class="genactions" style="margin-top:16px">
-        <button class="btn primary" id="bikeSave">Opslaan naar career</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal" id="loadModal" hidden>
-    <div class="modal-card">
-      <div class="modal-head">
-        <h2>Belasting &amp; conflicten</h2>
-        <button class="iconbtn" id="loadClose">×</button>
-      </div>
-      <p class="modal-sub" id="loadSummary"></p>
-      <div id="loadTable" class="loadtable"></div>
     </div>
   </div>
 

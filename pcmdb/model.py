@@ -313,6 +313,12 @@ class Career:
         out.sort(key=lambda x: x["ability"], reverse=True)
         return out
 
+    # fit / fatigue / freshness / prepa read as percentages; peak_value does not —
+    # it sits around 1.0 in a fresh save, so a 0-100 write would be nonsense.
+    FIT_RANGES = {"fit": (0.0, 100.0), "fatigue": (0.0, 100.0),
+                  "freshness": (0.0, 100.0), "prepa": (0.0, 100.0),
+                  "peak": (0.0, 5.0)}
+
     def set_form(self, rider_id, fields):
         t = self.db["DYN_cyclist_fitness"]
         i = self._fitness_index().get(rider_id)
@@ -322,8 +328,9 @@ class Career:
             col_name = self.FIT_FIELDS.get(k)
             if not col_name:
                 continue
+            lo, hi = self.FIT_RANGES.get(k, (0.0, 100.0))
             vals = t.column(col_name)
-            vals[i] = float(v)
+            vals[i] = max(lo, min(hi, float(v)))
             t.set_column(col_name, vals)
 
     # ---- dynamic form: peak windows (DYN_cyclist_fitpeak_history) ----
