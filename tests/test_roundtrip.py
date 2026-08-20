@@ -1,12 +1,16 @@
 """
-Round-trip & encoder-inverse tests.
+Round-trip & encoder-inverse tests against a REAL game save.
 
-These require a real career .cdb. Point the env var PCM_CDB at one:
-    PCM_CDB=/path/to/Career.cdb python -m pytest tests/ -v
-
-The tests assert the two invariants the whole editor rests on:
+These assert the two invariants the whole editor rests on:
   1. parse -> serialise is byte-exact (the chunk engine loses nothing)
   2. decode -> encode is byte-exact for every column (edits touch only what you change)
+
+Byte-exactness against a file Cyanide itself produced can only be proven with a
+real save, so these stay opt-in. Point PCM_CDB at one:
+    PCM_CDB=/path/to/Career.cdb python -m pytest tests/ -v
+
+Without it they skip; the synthetic-fixture suites still cover the same code
+paths (see test_cdb_synthetic.py and test_editor_actions.py).
 """
 import os
 import struct
@@ -16,7 +20,12 @@ from pcmdb import cdb
 from pcmdb.schema import Database, _decode_column
 
 CDB = os.environ.get("PCM_CDB")
-pytestmark = pytest.mark.skipif(not CDB, reason="set PCM_CDB to a career .cdb")
+# guard on the FILE, not just the env var: a stale PCM_CDB pointing at a missing
+# path used to raise FileNotFoundError in every test instead of skipping.
+pytestmark = pytest.mark.skipif(
+    not (CDB and os.path.isfile(CDB)),
+    reason="set PCM_CDB to an existing career .cdb",
+)
 
 
 def _payload():
@@ -67,7 +76,10 @@ def test_edit_persists_through_save_load(tmp_path):
     db = Database(root)
     tr = db["DYN_team_race"]
     roster = tr.column("gene_ilist_roster")
-    target = next(i for i in range(tr.nrow) if len(roster[i]) >= 3)
+    # a pre-season save has no rosters yet — that case is covered synthetically
+    target = next((i for i in range(tr.nrow) if len(roster[i]) >= 3), None)
+    if target is None:
+        pytest.skip("save has no filled rosters (pre-season)")
     new = list(roster[target]); new[0] = 91234
     roster[target] = new
     tr.set_column("gene_ilist_roster", roster)
