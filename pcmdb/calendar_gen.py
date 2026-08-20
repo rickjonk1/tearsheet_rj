@@ -255,7 +255,9 @@ def candidates_for(career: Career, team_id, rider_id, gate_frac=0.85):
         fit = career.race_fit(rider_id, r["id"])
         if fit >= gate:
             out.append({"race": r["id"], "name": r["name"], "day": r["day"], "month": r["month"],
-                        "pop": r["popularity"], "fit": round(fit, 1)})
+                        "pop": r["popularity"], "fit": round(fit, 1),
+                        "stages": r.get("stages", 1),
+                        "disc": career.race_discipline(r["id"])})
     out.sort(key=lambda x: (x["month"], x["day"]))
     return out
 

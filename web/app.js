@@ -10,15 +10,40 @@ async function api(path, opts){ const r = await fetch(path, opts); return r.json
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(t._t);
   t._t=setTimeout(()=>t.hidden=true, 2200); }
 
-function tier(pop, klass){
-  if(klass===22||klass===23) return {c:"#e879f9", bg:"rgba(232,121,249,.13)", l:"NK"};
-  if(pop>=45) return {c:"#fbbf24", bg:"rgba(251,191,36,.14)", l:"WorldTour"};
-  if(pop>=20) return {c:"#37e08b", bg:"rgba(55,224,139,.13)", l:"Pro"};
-  if(pop>=8)  return {c:"#5b9dff", bg:"rgba(91,157,255,.13)", l:"Continental"};
-  return {c:"#8b95a9", bg:"rgba(139,149,169,.12)", l:"Nationaal"};
+/* The classification jerseys are this product's legend. A race's colour says what
+   KIND of race it is — never decoration. */
+const JERSEY={gc:"var(--maillot)",mtn:"var(--pois)",spr:"var(--vert)",
+              cls:"var(--pave)",itt:"var(--azzurro)"};
+const DISC_LABEL={gc:"RONDE",mtn:"BERG",spr:"SPRINT",cls:"KASSEIEN",itt:"TIJDRIT"};
+
+/* The elevation sawtooth — the most recognisable drawing in cycling. */
+function profileSvg(points, disc, w=44, h=15){
+  if(!points || !points.length) points=[.1,.1,.1,.1,.1];
+  const step=w/(points.length-1);
+  const pts=points.map((v,i)=>`${(i*step).toFixed(1)},${(h-1-v*(h-2)).toFixed(1)}`).join(" ");
+  return `<svg class="prof" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+    <polyline points="${pts}" fill="none" stroke="${JERSEY[disc]||'var(--ink-3)'}"
+      stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 }
-function stars(pop){ const n=Math.max(1,Math.min(5,Math.round(pop/20)));
-  let s='<span class="pop">'; for(let i=1;i<=5;i++) s+=`<i class="${i<=n?'on':''}">★</i>`; return s+"</span>"; }
+/* A roadbook abbreviates, it never truncates mid-word. Keep the word that
+   identifies the race to someone who follows cycling. */
+const RACE_SHORT={"tour de france":"Tour","giro d'italia":"Giro","vuelta":"Vuelta",
+  "paris-roubaix":"Roubaix","paris\u2013roubaix":"Roubaix",
+  "ronde van vlaanderen":"Vlaanderen","milaan-sanremo":"Sanremo",
+  "milaan\u2013sanremo":"Sanremo","luik-bastenaken-luik":"Luik","il lombardia":"Lombardia"};
+function shortRace(name){
+  const k=name.toLowerCase().trim();
+  if(RACE_SHORT[k]) return RACE_SHORT[k];
+  for(const [key,val] of Object.entries(RACE_SHORT)) if(k.startsWith(key)) return val;
+  const drop=/^(ronde van|tour of|tour de|giro di|vuelta a|grand prix|gp)\s+/i;
+  const stripped=name.replace(drop,"");
+  return (stripped||name).split(/[\s\u2013-]+/)[0];
+}
+function raceClass(pop, klass){
+  if(klass===22||klass===23) return "NK";
+  if(pop>=45) return "WORLDTOUR"; if(pop>=20) return "PRO";
+  if(pop>=8) return "CONTINENTAL"; return "NATIONAAL";
+}
 function initials(name){ const p=name.trim().split(/\s+/); return ((p[0]||"")[0]||"")+((p[p.length-1]||"")[0]||""); }
 
 /* ---------- bootstrap ---------- */
@@ -27,7 +52,7 @@ async function boot(){
   // desktop mode exposes window.pywebview -> show the native Open button
   if(window.pywebview) $("#btnOpen").hidden=false;
   if(!b.loaded){
-    $("#topmeta").innerHTML=`<span style="color:var(--mut2)">Geen career geladen — open een .cdb</span>`;
+    $("#topmeta").innerHTML=`<span style="color:var(--ink-4)">Geen career geladen — open een .cdb</span>`;
     $("#boardTitle").textContent="Open een career";
     $("#boardSub").textContent="Kies een PCM .cdb-bestand om te beginnen.";
     $("#btnOpen").hidden=false;
@@ -38,7 +63,7 @@ async function boot(){
     `<span><b>${b.counts.riders.toLocaleString('nl')}</b> renners</span>`+
     `<span><b>${b.counts.races}</b> koersen</span>`+
     `<span><b>${b.counts.teams}</b> ploegen</span>`+
-    `<span style="color:var(--mut2)">${(b.path||'').split('/').pop()}</span>`;
+    `<span style="color:var(--ink-4)">${(b.path||'').split('/').pop()}</span>`;
   renderTeams(state.teams);
   openWizard();
 }
@@ -58,7 +83,8 @@ function renderTeams(list){
   const box = $("#teamList"); box.innerHTML="";
   list.forEach(t=>{
     const row = el("div","teamrow"+(t.id===state.teamId?" active":""));
-    const dc = t.avgAbility>=76?"#fbbf24":t.avgAbility>=73?"#37e08b":t.avgAbility>=68?"#5b9dff":"#8b95a9";
+    const dc = t.avgAbility>=76?"var(--maillot)":t.avgAbility>=73?"var(--ink-2)"
+             :t.avgAbility>=68?"var(--ink-3)":"var(--rule-2)";
     row.innerHTML = `<span class="dot" style="background:${dc}"></span>
       <span class="tn">${t.name}</span><span class="tr">${t.avgAbility}</span>`;
     row.onclick = ()=>selectTeam(t.id);
@@ -76,7 +102,7 @@ async function selectTeam(id){
   state.teamId=id; state.selRow=null;
   renderTeams(state.teams.filter(t=>{
     const q=$("#teamSearch").value.toLowerCase(); return !q||t.name.toLowerCase().includes(q);}));
-  $("#calendar").innerHTML='<div class="skeleton">Seizoen laden…</div>';
+  $("#calendar").innerHTML='<div class="cal-month">Seizoen laden…</div>';
   const d = await api("/api/team?id="+id);
   state.program=d.program; state.squad=d.squad;
   const t = state.teams.find(x=>x.id===id);
@@ -84,9 +110,9 @@ async function selectTeam(id){
   const withR = d.program.filter(p=>p.roster.length).length;
   $("#boardSub").textContent = `1 januari · start van het seizoen — ${d.program.length} koersen op de kalender`;
   $("#seasonStats").innerHTML =
-    `<div class="chipstat"><div class="v">${d.program.length}</div><div class="l">Koersen</div></div>`+
-    `<div class="chipstat"><div class="v">${withR}</div><div class="l">Ingevuld</div></div>`+
-    `<div class="chipstat"><div class="v">${t?t.avgAbility:'–'}</div><div class="l">Gem. niveau</div></div>`;
+    `<div><div class="v">${d.program.length}</div><div class="k">Koersen</div></div>`+
+    `<div><div class="v">${withR}</div><div class="k">Ingevuld</div></div>`+
+    `<div><div class="v">${t?t.avgAbility:'–'}</div><div class="k">Niveau</div></div>`;
   renderTeamCard(t, d);
   renderCalendar();
   renderEditorEmpty();
@@ -95,16 +121,18 @@ async function selectTeam(id){
 function renderTeamCard(t, d){
   if(!t){ $("#teamCard").innerHTML=""; return; }
   $("#teamCard").innerHTML = `
-    <div class="tc">
+    <div class="teamcard">
       <h3>${t.name}</h3>
-      <div class="tc-sub">${d.squad.length} renners in selectie</div>
+      <div class="tc-meta">${d.squad.length} renners in selectie</div>
       <div class="tc-stats">
-        <div class="tc-stat"><div class="v">${t.avgAbility}</div><div class="l">Gem. niveau</div></div>
-        <div class="tc-stat"><div class="v">${t.topAbility}</div><div class="l">Kopman</div></div>
+        <div><div class="v">${t.avgAbility}</div><div class="k">Gem. niveau</div></div>
+        <div><div class="v">${t.topAbility}</div><div class="k">Kopman</div></div>
       </div>
-      <div class="tc-top"><div class="badge">${initials(t.topRider)}</div>
-        <div><div style="font-size:13px;font-weight:650">${t.topRider}</div>
-        <div style="font-size:11px;color:var(--mut)">Beste renner</div></div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="dossard lead">1</span>
+        <div><div style="font-family:var(--serif);font-size:14px">${t.topRider}</div>
+        <div class="meta" style="margin-top:2px">Beste renner</div></div>
+      </div>
     </div>`;
 }
 
@@ -116,9 +144,8 @@ function renderCalendar(){
   state.program.forEach(p=>{
     if(p.month!==curMonth){
       curMonth=p.month;
-      const sep=el("div","month-sep");
-      sep.innerHTML=`<span class="mname">${MONTHS[p.month]||'—'}</span><span class="mline"></span>
-        <span class="mcount">${byMonth[p.month].length} koersen</span>`;
+      const sep=el("div","cal-month");
+      sep.textContent=`${MONTHS[p.month]||'—'} · ${byMonth[p.month].length} koersen`;
       box.appendChild(sep);
     }
     box.appendChild(raceCard(p));
@@ -126,25 +153,20 @@ function renderCalendar(){
 }
 
 function raceCard(p){
-  const c=el("div","race"+(p.row===state.selRow?" sel":""));
-  const tt=tier(p.popularity, p.klass);
-  const av = p.roster.slice(0,5).map(r=>`<span class="av" title="${r.name}">${initials(r.name)}</span>`).join("");
-  const more = p.roster.length>5?`<span class="av more">+${p.roster.length-5}</span>`:"";
+  const c=el("div",`race-row ${p.disc||'gc'}`+(p.popularity>=70?" major":"")
+    +(p.row===state.selRow?" active":""));
+  const bits=[DISC_LABEL[p.disc]||"", p.stages>1?`${p.stages} etappes`:"eendagskoers"];
+  if(p.objectives) bits.push(`${p.objectives} doel${p.objectives>1?'en':''}`);
+  if(p.warn) bits.push(`${p.warn} conflict${p.warn>1?'en':''}`);
   c.innerHTML=`
-    <div class="date"><div class="d">${String(p.day).padStart(2,'0')}</div><div class="m">${MON3[p.month]||''}</div></div>
-    <div class="main">
-      <div class="rn">${p.name}</div>
-      <div class="meta">
-        <span class="jersey" style="color:${tt.c};background:${tt.bg}">${tt.l}</span>
-        ${stars(p.popularity)}
-        ${p.objectives?`<span class="objtag">★ ${p.objectives} doel${p.objectives>1?'en':''}</span>`:''}
-        ${p.warn?`<span class="warntag">⚠ ${p.warn}</span>`:''}
-      </div>
+    <div class="date">${String(p.day).padStart(2,'0')} ${MON3[p.month]||''}</div>
+    ${profileSvg(p.profile, p.disc)}
+    <div>
+      <div class="rname">${p.name}</div>
+      <div class="rmeta">${bits.filter(Boolean).join(" · ")}</div>
     </div>
-    <div class="right">
-      <div class="avatars">${av}${more}</div>
-      <div class="rostercount ${p.roster.length?'':'empty'}">${p.roster.length?p.roster.length+' renners':'leeg'}</div>
-    </div>`;
+    <div class="rclass">${raceClass(p.popularity,p.klass)}</div>
+    <div class="rsel ${p.roster.length?'on':''}">${p.roster.length?p.roster.length+"/8":"—"}</div>`;
   c.onclick=()=>openEditor(p.row);
   return c;
 }
@@ -167,25 +189,22 @@ async function openEditor(row){
     .filter(s=>!inRoster.has(s.id))
     .map(s=>({...s, fit: fitMap[s.id] ?? 0, busy: busy.has(s.id)}))
     .sort((a,b)=>(a.busy-b.busy) || (b.fit-a.fit));
-  const tt=tier(p.popularity, p.klass);
   const cap = 8;
   body.innerHTML=`
-    <div class="eh">
-      <div class="en">${p.name}</div>
-      <div class="ed"><span>${String(p.day).padStart(2,'0')} ${MONTHS[p.month]}</span>·
-        <span class="jersey" style="color:${tt.c};background:${tt.bg}">${tt.l}</span></div>
+    <div class="ed-head">
+      <h2>${p.name}</h2>
+      ${profileSvg(p.profile, p.disc, 96, 22)}
+      <span class="meta">${String(p.day).padStart(2,'0')} ${MONTHS[p.month]} ·
+        ${DISC_LABEL[p.disc]||''} · ${raceClass(p.popularity,p.klass)}</span>
     </div>
-    <div class="esec">
-      <div class="esec-title"><h4>Selectie</h4><span class="cnt">${p.roster.length}/${cap}</span></div>
-      <div id="rosterList"></div>
-      <button class="btn ghost autofill" id="autofill">⚡ Automatisch aanvullen (specialiteit)</button>
-    </div>
-    <div class="esec">
-      <div class="esec-title"><h4>Suggesties · beste fit</h4></div>
-      <div id="sugList"></div>
-    </div>`;
+    <div class="kicker" style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <span>Selectie</span><span>${p.roster.length}/${cap}</span></div>
+    <div id="rosterList" class="ed-list"></div>
+    <div class="ed-foot"><button class="btn" id="autofill" style="width:100%">Automatisch aanvullen op profiel</button></div>
+    <div class="kicker" style="margin:22px 0 8px">Beschikbaar · beste fit</div>
+    <div id="sugList" class="ed-list"></div>`;
   const rl=$("#rosterList");
-  if(!p.roster.length) rl.innerHTML=`<div style="color:var(--mut2);font-size:12px;padding:6px 2px">Nog geen renners geselecteerd.</div>`;
+  if(!p.roster.length) rl.innerHTML=`<div style="color:var(--ink-4);font-size:12px;padding:6px 2px">Nog geen renners geselecteerd.</div>`;
   p.roster.slice().sort((a,b)=>b.fit-a.fit).forEach((r,i)=>rl.appendChild(riderRow(r,p,true,i===0)));
   const sl=$("#sugList");
   suggestions.slice(0,12).forEach(s=>sl.appendChild(riderRow(s,p,false,false)));
@@ -197,25 +216,23 @@ function estFit(s,p){ // client-side fallback (server gives fit for current rost
 }
 
 function riderRow(r,p,inRoster,isLead){
-  const row=el("div","rider"+(inRoster?"":" sug")+(r.busy?" busy":""));
+  const row=el("div","ed-rider"+(inRoster?" picked":"")+(r.busy?" busy":""));
   const fit=Math.round(r.fit||0);
-  const star = inRoster ? `<button class="objbtn ${r.obj?'on':''}" title="Doelkoers voor deze renner">${r.obj?'★':'☆'}</button>` : '';
-  const warn = inRoster && r.warn ? '<span class="wdot" title="Overlapt met andere koers">⚠</span>' : '';
-  const fitcell = r.busy
-    ? `<div class="fitwrap"><span class="busytag">bezet</span></div>`
-    : `<div class="fitwrap"><div class="fitbar"><i style="width:${Math.min(100,fit)}%"></i></div>
-        <div class="fitval">${fit} fit</div></div>`;
+  const star = inRoster ? `<button class="capbtn ${r.obj?'on':''}" title="Doelkoers voor deze renner">DOEL</button>` : '';
+  const warn = inRoster && r.warn ? '<span class="wdot" title="Overlapt met een andere koers">!</span>' : '';
   row.innerHTML=`
-    <div class="rr-name">
-      <div class="nm">${r.name} ${isLead?'<span class="leadtag">KOPMAN</span>':''}${warn}</div>
-      <div class="sp">${r.specialty}</div>
+    ${inRoster?`<span class="dossard${isLead?' lead':''}">${isLead?1:''}</span>`:''}
+    <div style="flex:1;min-width:0">
+      <div class="nm">${r.name}</div>
+      <div class="sp">${r.specialty}${r.busy?' · bezet':''}</div>
     </div>
-    <span class="abil">${r.ability}</span>
-    ${fitcell}
+    ${warn}
+    <span class="fit">${r.busy?'—':fit}</span>
     ${star}
-    <button class="rr-act ${inRoster?'rm':''}">${inRoster?'−':'+'}</button>`;
-  if(inRoster) row.querySelector(".objbtn").onclick=(e)=>{ e.stopPropagation(); toggleObjective(p,r); };
-  row.querySelector(".rr-act").onclick=(e)=>{ e.stopPropagation();
+    <button class="capbtn">${inRoster?'−':'+'}</button>`;
+  const btns=row.querySelectorAll(".capbtn");
+  if(inRoster) btns[0].onclick=(e)=>{ e.stopPropagation(); toggleObjective(p,r); };
+  btns[btns.length-1].onclick=(e)=>{ e.stopPropagation();
     inRoster?removeRider(p,r.id):addRider(p,r.id); };
   return row;
 }
@@ -261,7 +278,7 @@ $("#btnLoad").onclick=async()=>{ if(state.teamId==null) return toast("Kies eerst
   const maxDays=Math.max(1,...d.riders.map(r=>r.racedays));
   $("#loadSummary").textContent=`${d.riders.length} renners · ${d.conflicts} planningsconflict${d.conflicts===1?'':'en'} in het seizoen.`;
   $("#loadTable").innerHTML=
-    `<div class="loadrow head"><span>Renner</span><span class="num">Dagen</span><span>Belasting</span><span class="num">Doelen</span><span class="confpill">⚠</span></div>`+
+    `<div class="loadrow head"><span>Renner</span><span class="num">Dagen</span><span>Belasting</span><span class="num">Doelen</span><span class="num">Conflicten</span></div>`+
     d.riders.map(r=>{
       const pct=Math.round(r.racedays/maxDays*100);
       const over=r.racedays>85;
@@ -362,7 +379,7 @@ const MON3B=["","JAN","FEB","MRT","APR","MEI","JUN","JUL","AUG","SEP","OKT","NOV
 async function buildSeason(){
   const {leaders,coleaders}=setupRoleArrays();
   setup.roleArrays={leaders,coleaders};
-  $("#setupActions").innerHTML=`<span style="color:var(--mut)">Bezig…</span>`;
+  $("#setupActions").innerHTML=`<span style="color:var(--ink-3)">Bezig…</span>`;
   const s=await api("/api/season-setup",{method:"POST",headers:{'Content-Type':'application/json'},
     body:JSON.stringify({team:state.teamId,leaders,coleaders,seed:7})});
   setup.captainRaces={};
@@ -384,12 +401,15 @@ function renderPlanner(){
   const d=setup.preview; const campMonth={};
   (d.camps||[]).forEach(cp=>campMonth[+String(cp.start).slice(4,6)]=cp);
   let html=`<div class="pl2-legend">
-    <span class="chip2 big">Grote doelkoers</span>
-    <span class="chip2">Koers</span>
-    <span class="mk">▲ vormpiek</span><span class="mk">👁 recon</span><span class="mk">🏔 hoogtestage</span>
-    <span class="pl2-hint">Klik een cel bij een kopman/co-leider om koersen te kiezen.</span></div>`;
+    <span><i style="background:var(--maillot)"></i>ronde</span>
+    <span><i style="background:var(--pois)"></i>berg</span>
+    <span><i style="background:var(--vert)"></i>sprint</span>
+    <span><i style="background:var(--pave)"></i>kasseien</span>
+    <span><i style="background:var(--azzurro)"></i>tijdrit</span>
+    <span>▲ vormpiek</span>
+    <span class="pl2-hint">Klik een cel bij een kopman of co-leider om koersen te kiezen.</span></div>`;
   html+=`<div class="pl2"><div class="pl2-head"><div class="pl2-name">Renner</div>`;
-  for(let m=1;m<=12;m++) html+=`<div class="pl2-mh${campMonth[m]?' camp':''}">${MON3B[m]}${campMonth[m]?' 🏔':''}</div>`;
+  for(let m=1;m<=12;m++) html+=`<div class="pl2-mh${campMonth[m]?' camp':''}">${MON3B[m]}${campMonth[m]?' ·':''}</div>`;
   html+=`</div>`;
   ROLE_ORDER.forEach(([role,label,cls])=>{
     const list=d.riders.filter(r=>r.role===role);
@@ -401,20 +421,25 @@ function renderPlanner(){
     list.forEach(r=>{
       const editable=r.role!=='Knecht';
       html+=`<div class="pl2-row ${cls}"><div class="pl2-name">
-        <div class="pl2-rn">${r.name}</div>
-        <div class="pl2-rm">${r.specialty} · ${r.days} dagen${r.races.length?` · ${r.races.length} koersen`:''}</div>`;
+        <div class="pl2-rn"><span class="dossard${r.role==='Leider'?' lead':''}">${r.no}</span>${r.name}</div>
+        <div class="pl2-rm">${r.specialty} · ${r.races.length}× · ${r.days}d</div>`;
       if(editable) html+=`<div class="pl2-acts">
-        <button class="capbtn" data-camp="${r.id}" title="Hoogtestage vóór grootste doel">🏔</button>
-        <button class="capbtn ${r.races.some(x=>x.recon)?'on':''}" data-recon="${r.id}" title="Recon doelkoersen">👁</button></div>`;
+        <button class="capbtn" data-camp="${r.id}" title="Boek een hoogtestage vóór zijn grootste doel">HOOG</button>
+        <button class="capbtn ${r.races.some(x=>x.recon)?'on':''}" data-recon="${r.id}" title="Verken zijn doelkoersen">VERK</button></div>`;
       html+=`</div>`;
       const byMonth={}; r.races.forEach(x=>(byMonth[x.month]=byMonth[x.month]||[]).push(x));
       for(let m=1;m<=12;m++){
         html+=`<div class="pl2-cell${editable?' edit':''}" ${editable?`data-rid="${r.id}" data-month="${m}"`:''}>`;
         (byMonth[m]||[]).sort((a,b)=>a.day-b.day).forEach(x=>{
-          const mk=(x.peak?'▲':'')+(x.recon?'👁':'');
-          html+=`<span class="chip2 ${x.pop>=70?'big':''}${x.leader?' lead':''}" title="${x.name}${x.peak?' · vormpiek':''}${x.recon?' · recon':''}">${mk?mk+' ':''}${String(x.day).padStart(2,'0')} ${x.name.slice(0,13)}</span>`;
+          const cl=[x.disc||'gc', x.leader?'lead':'', x.peak?'peak':''].filter(Boolean).join(' ');
+          const tip=[x.name, DISC_LABEL[x.disc]||'', x.peak?'vormpiek':'', x.recon?'verkend':'']
+            .filter(Boolean).join(' · ');
+          html+=`<span class="chip2 ${cl}" title="${tip}">
+            <span class="d">${String(x.day).padStart(2,'0')}</span>
+            <span class="n">${shortRace(x.name)}${x.recon?' ·':''}</span></span>`;
         });
-        if(campMonth[m]&&editable) html+=`<span class="chip2 camp" title="Hoogtestage ${campMonth[m].place}">🏔 ${campMonth[m].place.slice(0,11)}</span>`;
+        if(campMonth[m]&&editable) html+=`<span class="chip2 itt" title="Hoogtestage ${campMonth[m].place}">
+          <span class="d">HOOG</span><span class="n">${campMonth[m].place}</span></span>`;
         html+=`</div>`;
       }
       html+=`</div>`;
@@ -488,11 +513,11 @@ async function applySeason(){
   const {leaders,coleaders}=setupRoleArrays();
   const captains={};
   Object.keys(setup.captainRaces).forEach(id=>captains[id]=[...setup.captainRaces[id]]);
-  $("#setupActions").innerHTML=`<span style="color:var(--mut)">Jouw seizoen toepassen…</span>`;
+  $("#setupActions").innerHTML=`<span style="color:var(--ink-3)">Jouw seizoen toepassen…</span>`;
   const r=await api("/api/season-apply",{method:"POST",headers:{'Content-Type':'application/json'},
     body:JSON.stringify({team:state.teamId,leaders,coleaders,captains,save:false})});
   // AI-teams op de achtergrond, zelfde logica (jouw ploeg wordt niet overschreven)
-  $("#setupActions").innerHTML=`<span style="color:var(--mut)">Peloton (AI) genereren…</span>`;
+  $("#setupActions").innerHTML=`<span style="color:var(--ink-3)">Peloton (AI) genereren…</span>`;
   const a=await api("/api/generate-all",{method:"POST",headers:{'Content-Type':'application/json'},
     body:JSON.stringify({exclude:state.teamId,seed:7,save:true})});
   $("#setupModal").hidden=true;
@@ -540,7 +565,7 @@ async function loadCamps(){
 }
 function renderCampList(booked){
   const box=$("#campList");
-  if(!booked.length){ box.innerHTML=`<div style="color:var(--mut2);font-size:12px;padding:8px 2px">Nog geen kampen geboekt.</div>`; return; }
+  if(!booked.length){ box.innerHTML=`<div style="color:var(--ink-4);font-size:12px;padding:8px 2px">Nog geen kampen geboekt.</div>`; return; }
   box.innerHTML=booked.map(c=>{
     const s=String(c.start), e=String(c.end);
     const fmt=x=>`${x.slice(6,8)}/${x.slice(4,6)}`;
@@ -567,7 +592,7 @@ async function runGen(apply){
   $("#genResult").innerHTML='<div class="skeleton">Genereren…</div>';
   const r=await api("/api/generate",{method:"POST",headers:{'Content-Type':'application/json'},
     body:JSON.stringify({team:state.teamId,seed,variety,apply})});
-  $("#genResult").innerHTML=`<div style="font-size:12px;color:var(--mut);margin-bottom:8px">${r.planned} koersen gepland</div>`+
+  $("#genResult").innerHTML=`<div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">${r.planned} koersen gepland</div>`+
     r.preview.slice(0,40).map(e=>`<div class="genrow"><span class="gd">${String(e.day).padStart(2,'0')}/${String(e.month).padStart(2,'0')}</span>
       <span class="gnm">${e.name}</span><span class="gl">${e.leader}</span></div>`).join("");
   if(apply){ toast(`Kalender toegepast: ${r.planned} koersen`); $("#genModal").hidden=true; refreshTeam(); }
@@ -580,8 +605,8 @@ $("#genAll").onclick=async()=>{
   const r=await api("/api/generate-all",{method:"POST",headers:{'Content-Type':'application/json'},
     body:JSON.stringify({seed,variety})});
   $("#genResult").innerHTML=`<div style="text-align:center;padding:10px">
-    <div style="font-size:34px;font-weight:800;color:var(--gold)">${r.rosters}</div>
-    <div style="color:var(--mut);font-size:12px">rosters gepland over ${r.teams} ploegen</div></div>`;
+    <div class="big">${r.rosters}</div>
+    <div style="color:var(--ink-3);font-size:12px">rosters gepland over ${r.teams} ploegen</div></div>`;
   toast(`Peloton gepland: ${r.teams} ploegen`); refreshTeam();
 };
 

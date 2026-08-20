@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Peloton — Season Planner</title>
+  <title>Roadbook — seizoensplanner</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -18,17 +18,17 @@
       </svg>
       <div class="brandtext">
         <strong>PELOTON</strong>
-        <span>Season Planner</span>
+        <span>Seizoensroadbook</span>
       </div>
     </div>
     <div class="topmeta" id="topmeta"></div>
     <div class="topactions">
-      <button class="btn ghost" id="btnOpen" hidden>📂 Openen</button>
-      <button class="btn ghost" id="btnSetup">🗓 Seizoen opzetten</button>
-      <button class="btn ghost" id="btnForm">🏔 Vorm &amp; Training</button>
-      <button class="btn ghost" id="btnBikes">🚲 Fietsbalans</button>
-      <button class="btn ghost" id="btnLoad">📊 Belasting</button>
-      <button class="btn ghost" id="btnGenerate">✨ Kalender</button>
+      <button class="btn ghost" id="btnOpen" hidden>Openen</button>
+      <button class="btn ghost" id="btnSetup">Seizoen opzetten</button>
+      <button class="btn ghost" id="btnForm">Vorm</button>
+      <button class="btn ghost" id="btnBikes">Materiaal</button>
+      <button class="btn ghost" id="btnLoad">Belasting</button>
+      <button class="btn ghost" id="btnGenerate">Kalender</button>
       <button class="btn primary" id="btnSave">Opslaan</button>
     </div>
   </header>
@@ -57,7 +57,10 @@
     <aside class="editor" id="editor">
       <div class="editor-empty" id="editorEmpty">
         <div class="editor-empty-inner">
-          <div class="hint-icon">🚴</div>
+          <svg class="hint-icon" width="86" height="26" viewBox="0 0 86 26" aria-hidden="true">
+            <polyline points="0,22 10,19 18,9 26,15 34,4 44,12 52,6 62,17 72,11 86,20"
+              fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
           <p>Selecteer een koers om de selectie samen te stellen.</p>
         </div>
       </div>
@@ -76,7 +79,7 @@
     <div class="modal-card">
       <div class="modal-head">
         <h2>Realistische kalender genereren</h2>
-        <button class="iconbtn" id="genClose">✕</button>
+        <button class="iconbtn" id="genClose">×</button>
       </div>
       <p class="modal-sub">Verdeelt de renners van deze ploeg over hun koersen op basis van
         specialiteit, niveau en belasting. Elke seed geeft een ander, realistisch seizoen.</p>
@@ -87,7 +90,7 @@
       <div class="genactions">
         <button class="btn ghost" id="genPreview">Voorbeeld</button>
         <button class="btn primary" id="genApply">Deze ploeg</button>
-        <button class="btn gold" id="genAll">✨ Alle ploegen</button>
+        <button class="btn gold" id="genAll">Alle ploegen</button>
       </div>
       <div id="genResult" class="genresult"></div>
     </div>
@@ -95,11 +98,11 @@
 
   <div class="setup" id="setupModal" hidden>
     <div class="setup-head">
-      <div>
+      <div style="flex:1;min-width:0">
         <div class="setup-kicker" id="setupPhaseLabel">Stap 1 · Rollen</div>
         <h2 id="setupTitle">Seizoen opzetten</h2>
       </div>
-      <button class="iconbtn" id="setupClose">✕</button>
+      <button class="iconbtn" id="setupClose">×</button>
     </div>
     <div class="setup-body">
       <div id="setupRoles">
@@ -125,7 +128,7 @@
     <div class="modal-card wide">
       <div class="modal-head">
         <h2>Vorm &amp; Training</h2>
-        <button class="iconbtn" id="formClose">✕</button>
+        <button class="iconbtn" id="formClose">×</button>
       </div>
       <div class="tabs">
         <button class="tab on" data-tab="vorm">Vorm &amp; vermoeidheid</button>
@@ -133,12 +136,12 @@
       </div>
       <div id="tabVorm" class="tabpane">
         <p class="modal-sub">Vorm wordt <b>dynamisch bepaald door je seizoensplanning</b>: bij
-          <b>Seizoen opzetten</b> krijgt elke kopman automatisch een <span style="color:var(--grn)">▲ vormpiek</span>
+          <b>Seizoen opzetten</b> krijgt elke kopman automatisch een <span style="color:var(--pois)">▲ vormpiek</span>
           rond zijn 3 grootste doelkoersen (geschreven naar <code>DYN_cyclist_fitpeak_history</code>).
           Hieronder de huidige waarden per renner; gebruik de knoppen alleen voor een handmatige reset.</p>
         <div class="bulkbar">
-          <button class="btn ghost" id="bulkFresh">💧 Iedereen fris &amp; hersteld</button>
-          <button class="btn gold" id="bulkPeak">⚡ Iedereen in piekvorm</button>
+          <button class="btn ghost" id="bulkFresh">Iedereen fris &amp; hersteld</button>
+          <button class="btn gold" id="bulkPeak">Iedereen in piekvorm</button>
         </div>
         <div id="formList" class="formlist"></div>
       </div>
@@ -159,15 +162,15 @@
   <div class="modal" id="bikesModal" hidden>
     <div class="modal-card wide">
       <div class="modal-head">
-        <h2>Fietsbalans — aero vs. berg</h2>
-        <button class="iconbtn" id="bikesClose">✕</button>
+        <h2>Materiaal — aero tegenover klim</h2>
+        <button class="iconbtn" id="bikesClose">×</button>
       </div>
       <p class="modal-sub">Elk frame-archetype geeft <b>aero</b>, <b>gewicht (klim)</b> en <b>comfort</b> (0–3).
         Standaard is de allround-fiets een strikte upgrade van de bergfiets, dus kiest iedereen aero/allround.
         Pas de waarden aan of gebruik de rebalance zodat elk type zijn eigen terrein heeft.
         Schrijft naar <code>STA_equipment_template</code>. <span class="exp">Test in-game.</span></p>
       <div class="bulkbar">
-        <button class="btn gold" id="bikeRebalance">⚖️ Balanceer aero ↔ berg</button>
+        <button class="btn gold" id="bikeRebalance">Balanceer aero ↔ berg</button>
       </div>
       <div id="bikeList" class="bikelist"></div>
       <div class="genactions" style="margin-top:16px">
@@ -179,8 +182,8 @@
   <div class="modal" id="loadModal" hidden>
     <div class="modal-card">
       <div class="modal-head">
-        <h2>Belasting & conflicten</h2>
-        <button class="iconbtn" id="loadClose">✕</button>
+        <h2>Belasting &amp; conflicten</h2>
+        <button class="iconbtn" id="loadClose">×</button>
       </div>
       <p class="modal-sub" id="loadSummary"></p>
       <div id="loadTable" class="loadtable"></div>

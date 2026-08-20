@@ -256,6 +256,8 @@ class Handler(BaseHTTPRequestHandler):
                     ra = CAREER.races[r]
                     races.append({"race": r, "name": ra["name"], "day": ra["day"], "month": ra["month"],
                                   "pop": ra["popularity"], "leader": r in obj,
+                                  "stages": ra.get("stages", 1),
+                                  "disc": CAREER.race_discipline(r),
                                   "peak": r in peaks, "recon": r in recon})
                 riders.append({"id": rid, "name": CAREER.rider_label(rid), "role": role,
                                "ability": rr["ability"], "specialty": rr["specialty"],
@@ -264,6 +266,8 @@ class Handler(BaseHTTPRequestHandler):
                                "candidates": calendar_gen.candidates_for(CAREER, tid, rid,
                                    0.90 if role == "Leider" else 0.83) if role != "Knecht" else []})
             riders.sort(key=lambda x: (order[x["role"]], -x["ability"]))
+            for i, r in enumerate(riders):          # dossards: the leader carries 1
+                r["no"] = i + 1
             return self._send(200, {"year": CAREER.season_year(), "riders": riders,
                                     "camps": CAREER.team_camps(tid), "planned": len(res["plan"])})
         if u.path == "/api/season-apply":

@@ -175,6 +175,37 @@ class Career:
         return f"{r['first']} {r['last']}".strip() if r else str(rid)
 
     # ---- season program (editable) ----
+    # ---- how a race reads: its jersey and its elevation profile ----
+    # The classification jerseys are the legend this product is drawn in, so the
+    # mapping from a race's discipline weights to a jersey lives with the data.
+    def race_discipline(self, race_id):
+        """One of gc / mtn / spr / cls / itt — what kind of race this is."""
+        ra = self.races.get(race_id, {})
+        w = ra.get("weights") or {}
+        if not w:
+            return "gc"
+        if ra.get("stages", 1) > 3:
+            return "gc"                                   # a stage race is a stage race
+        ranked = max(w, key=lambda k: w.get(k, 0))
+        return {"pav_weight": "cls", "sp_weight": "spr", "pl_weight": "spr",
+                "mo_weight": "mtn", "mm_weight": "mtn", "val_weight": "mtn",
+                "itt_weight": "itt", "prl_weight": "itt"}.get(ranked, "gc")
+
+    def race_profile(self, race_id, points=9):
+        """A tiny elevation sawtooth (0 = valley, 1 = summit) drawn from the race's
+        own climbing weights — flat races read flat, mountain races spike."""
+        ra = self.races.get(race_id, {})
+        w = ra.get("weights") or {}
+        total = sum(w.values()) or 1
+        climb = (w.get("mo_weight", 0) * 1.0 + w.get("mm_weight", 0) * 0.7
+                 + w.get("val_weight", 0) * 0.45) / total          # 0..~1
+        out = []
+        for i in range(points):
+            # deterministic pseudo-relief so a race always draws the same shape
+            wave = ((i * 7 + race_id * 13) % 11) / 10.0
+            out.append(round(min(1.0, 0.08 + climb * (0.35 + wave * 1.25)), 3))
+        return out
+
     def season_program(self, team_id):
         tr = self.db["DYN_team_race"]
         teamcol, racecol, roster = (tr.column("fkIDteam"), tr.column("fkIDrace"),
@@ -183,10 +214,14 @@ class Career:
         for i in range(tr.nrow):
             if teamcol[i] != team_id:
                 continue
-            ra = self.races.get(racecol[i], {})
-            out.append({"row": i, "race": racecol[i], "name": ra.get("name", "?"),
+            rid = racecol[i]
+            ra = self.races.get(rid, {})
+            out.append({"row": i, "race": rid, "name": ra.get("name", "?"),
                         "day": ra.get("day", 0), "month": ra.get("month", 0),
                         "klass": ra.get("klass", 0), "popularity": ra.get("popularity", 0),
+                        "stages": ra.get("stages", 1),
+                        "disc": self.race_discipline(rid),
+                        "profile": self.race_profile(rid),
                         "roster": list(roster[i])})
         out.sort(key=lambda e: (e["month"], e["day"]))
         return out
