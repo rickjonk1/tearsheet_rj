@@ -138,7 +138,7 @@ def test_booking_state_is_looked_up_by_name_not_by_lowest_id(career):
     we write lands in a dead state."""
     t = career.db["STA_training_stages_state"]
     ids, names = t.column("IDtraining_stage_state"), t.column("CONSTANT")
-    booked = ids[names.index("BOOKED")]
+    booked = ids[names.index("SCHEDULED")]
     assert career.booking_state_booked() == booked
 
 

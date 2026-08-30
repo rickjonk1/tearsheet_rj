@@ -60,7 +60,9 @@ def _column(index, name, dtype, values):
         _leaf(cdb.COLUMN_DATA_TYPE, struct.pack("<I", dtype)),
         _leaf(cdb.COLUMN_VALUES, vbytes),
     ]
-    if bbytes is not None:
+    # a real save carries NO blob chunk when there is nothing in it (an all-empty
+    # list/string column is just the 4-byte prefix), so the fixture must not either
+    if bbytes is not None and len(bbytes) > 4:
         kids.append(_leaf(cdb.COLUMN_BLOB, bbytes))
     return _container(cdb.COLUMN, kids, desc=name)
 
@@ -289,18 +291,18 @@ def build_tree(extra_columns=None):
         ("fkIDcyclist", cdb.DT_INT, [16]),
         ("fkIDrace", cdb.DT_INT, [6]),
     ])
-    # type 9 == altitude camp (model.camps() keys "altitude" off this)
+    # real type ids: 3 == MONTAGNE (altitude), 9 == RECONNAISSANCE
     add("STA_training_stages", [
         ("IDtraining_stage", cdb.DT_INT, [1, 2, 3]),
         ("gene_sz_place", cdb.DT_STRING, ["Sierra Nevada", "Teide", "Vlaamse Ardennen"]),
         ("gene_i_stars", cdb.DT_INT, [4, 5, 3]),
-        ("fkIDtype_stage", cdb.DT_INT, [9, 9, 4]),
+        ("fkIDtype_stage", cdb.DT_INT, [3, 3, 4]),
         ("gene_i_opening_month", cdb.DT_INT, [3, 1, 1]),
         ("gene_i_closing_month", cdb.DT_INT, [10, 12, 12]),
     ])
     add("STA_training_stages_state", [
         ("IDtraining_stage_state", cdb.DT_INT, [0, 1]),
-        ("CONSTANT", cdb.DT_STRING, ["BOOKED", "DONE"]),
+        ("CONSTANT", cdb.DT_STRING, ["SCHEDULED", "CANCELLED"]),
     ])
     add("DYN_training_stage_booking", [
         ("IDtraining_stage_booking", cdb.DT_INT, [1]),

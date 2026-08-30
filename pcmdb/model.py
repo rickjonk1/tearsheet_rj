@@ -313,11 +313,12 @@ class Career:
         out.sort(key=lambda x: x["ability"], reverse=True)
         return out
 
-    # fit / fatigue / freshness / prepa read as percentages; peak_value does not —
-    # it sits around 1.0 in a fresh save, so a 0-100 write would be nonsense.
+    # Ranges measured across ~10,100 riders in a real career:
+    #   FIT 27..100 · fat_phy 0..50 · freshness 100 · prepa 36..100 · peak 0..124
+    # peak_value is NOT a percentage, so it gets its own headroom.
     FIT_RANGES = {"fit": (0.0, 100.0), "fatigue": (0.0, 100.0),
                   "freshness": (0.0, 100.0), "prepa": (0.0, 100.0),
-                  "peak": (0.0, 5.0)}
+                  "peak": (0.0, 150.0)}
 
     def set_form(self, rider_id, fields):
         t = self.db["DYN_cyclist_fitness"]
@@ -379,6 +380,12 @@ class Career:
         t.rewrite(keep=lambda i: not (cyc[i] == rider_id and beg[i] // 10000 == year), add=add)
 
     # ---- training camps (STA_training_stages / DYN_training_stage_booking) ----
+    # Verified against a real career: STA_training_stages_type is
+    # 1 RECUPERATION · 2 PREPARATION · 3 MONTAGNE · 4 CLM · 5 PAVES
+    # 6 VALLONS · 7 SPRINT · 8 CLME · 9 RECONNAISSANCE
+    # We previously read 9 as "altitude" — that books a RECON camp instead.
+    CAMP_TYPE_MOUNTAIN = 3
+    CAMP_TYPE_RECON = 9
     def camps(self, month=None):
         t = self.db["STA_training_stages"]
         cols = {c: t.column(c) for c in ["IDtraining_stage", "gene_sz_place", "gene_i_stars",
@@ -391,7 +398,7 @@ class Career:
             out.append({"id": cols["IDtraining_stage"][i], "place": cols["gene_sz_place"][i],
                         "stars": cols["gene_i_stars"][i], "type": cols["fkIDtype_stage"][i],
                         "open": om, "close": cm,
-                        "altitude": cols["fkIDtype_stage"][i] == 9})
+                        "altitude": cols["fkIDtype_stage"][i] == self.CAMP_TYPE_MOUNTAIN})
         out.sort(key=lambda c: (-c["stars"], c["place"]))
         return out
 
@@ -490,7 +497,7 @@ class Career:
         ids = t.column("IDtraining_stage_state")
         if "CONSTANT" in t.colnames:
             names = t.column("CONSTANT")
-            for want in ("BOOKED", "RESERVED", "PLANNED", "TODO", "WAITING"):
+            for want in ("SCHEDULED", "BOOKED", "RESERVED", "PLANNED", "TODO", "WAITING"):
                 for i, n in enumerate(names):
                     if want in str(n).upper():
                         return ids[i]

@@ -127,9 +127,17 @@ class Table:
 
         if bbytes is not None:
             bchunk = col.find(cdb.COLUMN_BLOB)
-            if bchunk is None:
-                bchunk = cdb.Chunk(cdb.COLUMN_BLOB); col.children.append(bchunk)
-            bchunk.raw = bbytes
+            # The game stores NO blob chunk when there is nothing to store — an
+            # all-empty list/string column carries only the 4-byte length prefix.
+            # Writing that prefix anyway makes our output differ from a save the
+            # game wrote, so mirror its behaviour exactly in both directions.
+            if len(bbytes) <= 4:
+                if bchunk is not None:
+                    col.children.remove(bchunk)
+            else:
+                if bchunk is None:
+                    bchunk = cdb.Chunk(cdb.COLUMN_BLOB); col.children.append(bchunk)
+                bchunk.raw = bbytes
 
     def set_nrow(self, n):
         """Change the row count (updates the ROW_COUNT chunk)."""
