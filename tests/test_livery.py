@@ -133,3 +133,75 @@ def test_encoding_produces_the_exact_bulk_size(tmp_path):
     top = Image.new("RGB", (4096, 4096), (10, 60, 200))
     alpha = [Image.new("L", (s, s), 0) for s in ubulk.SIZES]
     assert len(ubulk.encode(top, alpha)) == ubulk.TOTAL
+
+
+# Uit een echte PCM-asset (Frm_Cervel_TVL001_25_diff.uasset): naam, zoals het
+# spel hem opslaat, met de twee hashes die erachter staan.
+NAMES = [
+    ("None", 0x03F4, 0x0DC5),
+    ("PF_DXT5", 0x8385, 0x51AE),
+    ("/Mod/Equipment/Frame/Frm_Cervel_XXX001_25/Frm_Cervel_TVL001_25_diff", 0xAEE2, 0x8B1A),
+    ("/Script/CoreUObject", 0x49F8, 0x3E2D),
+    ("/Script/Engine", 0x4086, 0x4985),
+    ("Class", 0x7774, 0x9178),
+    ("Default__Texture2D", 0x684A, 0x9301),
+    ("Frm_Cervel_TVL001_25_diff", 0x9D32, 0xA5CB),
+    ("Package", 0x4773, 0x1588),
+    ("Texture2D", 0xFDFE, 0xD140),
+]
+
+
+@pytest.mark.parametrize("name,h1,h2", NAMES)
+def test_name_hashes_match_a_real_asset(name, h1, h2):
+    import uename
+    assert uename.hashes(name) == (h1, h2)
+
+
+def test_the_two_hashes_are_not_the_same_function():
+    """Ze verschillen in hoofdlettergevoeligheid; wie ze verwisselt, breekt de
+    FName-lookup in het spel zonder dat er iets crasht."""
+    import uename
+    assert uename.strihash("Texture2D") == uename.strihash("TEXTURE2D")
+    assert uename.strcrc32("Texture2D") != uename.strcrc32("TEXTURE2D")
+
+
+def _fake_package(names):
+    """Een minimale naamtabel zoals in een cooked .uasset."""
+    import struct
+    import uename
+    out = bytearray()
+    for n in names:
+        b = n.encode() + b"\x00"
+        out += struct.pack("<i", len(b)) + b + struct.pack("<HH", *uename.hashes(n))
+    return bytes(out)
+
+
+def test_rename_keeps_the_package_the_same_length():
+    import uename
+    data = _fake_package(["Frm_Cervel_TVL001_25_diff", "Texture2D"])
+    out, n = uename.rename(data, "TVL", "VDK")
+    assert n == 1
+    assert len(out) == len(data)
+
+
+def test_rename_recomputes_both_hashes():
+    """De hashes horen bij de naam. Alleen de letters overschrijven laat ze fout
+    achter, en dat is precies het soort fout dat pas in de game zichtbaar wordt."""
+    import uename
+    data = _fake_package(["Frm_Cervel_TVL001_25_diff"])
+    out, _ = uename.rename(data, "TVL", "VDK")
+    assert uename.verify(out) == []
+    assert [n for _, n, _, _ in uename.name_table(out)] == ["Frm_Cervel_VDK001_25_diff"]
+
+
+def test_rename_refuses_a_different_length():
+    import uename
+    data = _fake_package(["Frm_Cervel_TVL001_25_diff"])
+    with pytest.raises(ValueError, match="even lang"):
+        uename.rename(data, "TVL", "X-VOO")
+
+
+def test_rename_refuses_a_name_that_is_not_there():
+    import uename
+    with pytest.raises(ValueError, match="komt in geen enkele naam voor"):
+        uename.rename(_fake_package(["Texture2D"]), "TVL", "VDK")
