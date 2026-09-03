@@ -33,6 +33,24 @@ op cassette, kettingbladen, remschijven en kabels. Het is dus geen doorzichtighe
 een masker voor de metalen onderdelen. `ubulk.py` haalt het alfakanaal per mip uit het
 origineel, zodat een bewerking die alleen RGB verandert de aandrijflijn niet sloopt.
 
+### De teamsleutel komt van de hoofdsponsor, niet van de ploeg
+
+`TVL` in de bestandsnaam is de sleutel van Visma. Welke sleutel het spel opvraagt
+hangt aan de **hoofdsponsor** van dat seizoen, niet aan de naam die je de ploeg geeft.
+Bij een sponsorwissel schrijft het spel de sleutel van de nieuwe sponsor over in
+`DYN_team.jersey_sz_abbreviation` — dus een save waarin de sponsor per 2031 wisselt
+naar een fictieve sponsor (`x-voo`, `vdk`) vraagt vanaf dat jaar om
+`Frm_Cervel_X-VOO001_25_diff` of `Frm_Cervel_VDK001_25_diff`, en die bestaan niet.
+
+Het gevolg is een fiets zonder texture: frame én wielen, want de wielen gaan langs
+dezelfde sleutel. Dat lijkt op een kapotte mod maar staat er los van. Twee manieren
+om het op te lossen:
+
+- zet `DYN_sponsor.jersey_sz_abbreviation` van de nieuwe sponsor op een sleutel die
+  wél bestaat (`tvl`), dan gebruikt de ploeg die liveries — één cel, geen pak nodig;
+- of lever met `uename.rename()` een complete set assets onder de nieuwe sleutel.
+  Dat betekent frame, wielen, helm en shirts, niet alleen het frame.
+
 ### De LOD-kopieën
 
 De onderste derde van de texture is geen decoratie: dat zijn dezelfde UV-eilanden op
