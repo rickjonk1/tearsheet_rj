@@ -36,10 +36,12 @@ def make(png, stem, out_pak):
     print("package %s\n   -> %s.{uasset,uexp,ubulk}" % (pkg, inner))
 
     tmp = base + ".new.ubulk"
-    ubulk.build(png, base + ".ubulk", tmp)
+    ubulk.build(png, base + ".ubulk", tmp, base + ".uasset")
     data = open(tmp, "rb").read()
     os.remove(tmp)
-    print("ubulk %d bytes" % len(data))
+    print("ubulk %d bytes, %s, mips %s"
+          % (len(data), ubulk.pixel_format(base + ".uasset"),
+             ubulk.mip_chain(len(data), ubulk.pixel_format(base + ".uasset"))))
 
     pak = pakbuild.build(MOUNT, [(inner + ".uasset", uasset),
                                  (inner + ".uexp", uexp),

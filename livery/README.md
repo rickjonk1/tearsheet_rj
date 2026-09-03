@@ -23,6 +23,12 @@ klein naar groot (128, 256, 512, 1024, 2048, 4096) bij één byte per pixel:
 
     128² + 256² + 512² + 1024² + 2048² + 4096² = 22.364.160
 
+Niets daarvan staat hardgecodeerd in de tool. Het pixelformaat komt uit de naamtabel
+van de `.uasset` (`PF_DXT5`, `PF_DXT1`) en de mipketen wordt teruggerekend uit de
+lengte van de `.ubulk`: er is maar één reeks halverende vierkanten die precies op dat
+aantal bytes uitkomt. Een wiel of helm is kleiner dan een frame en soms DXT1 in plaats
+van DXT5, en dat werkt zo vanzelf mee.
+
 De `XXX` in de mapnaam is het generieke frame; `TVL` is de teamvariant. Elk team heeft
 zijn eigen `_diff`.
 

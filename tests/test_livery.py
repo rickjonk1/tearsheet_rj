@@ -112,27 +112,64 @@ def test_path_hash_index_points_at_the_right_file(tmp_path, sample):
         assert by_hash[uecity.hash_path(path, got["seed"])] == i * 12
 
 
-def test_the_mip_chain_is_exactly_the_bulk_size():
-    """The .ubulk may only be swapped for one of identical length, and that length
-    is the sum of six square BC3 mips at one byte per pixel."""
-    assert ubulk.SIZES == [128, 256, 512, 1024, 2048, 4096]
-    assert ubulk.TOTAL == 22364160
-    assert sum(s * s for s in ubulk.SIZES) == ubulk.TOTAL
+FRAME_MIPS = [128, 256, 512, 1024, 2048, 4096]
+FRAME_BYTES = 22364160          # de echte lengte van Frm_Cervel_TVL001_25_diff.ubulk
 
 
-def test_encode_refuses_a_top_mip_that_is_not_4096(tmp_path):
+def test_the_frame_mip_chain_comes_out_of_the_real_bulk_size():
+    """De .ubulk mag alleen vervangen worden door een even lange. Die lengte is de
+    som van de vierkante BC3-mips, en daar valt de keten uit terug te rekenen."""
+    assert ubulk.mip_chain(FRAME_BYTES, "PF_DXT5") == FRAME_MIPS
+    assert sum(s * s for s in FRAME_MIPS) == FRAME_BYTES
+
+
+@pytest.mark.parametrize("nbytes,fmt,sizes", [
+    (22364160, "PF_DXT5", [128, 256, 512, 1024, 2048, 4096]),
+    (11182080, "PF_DXT1", [128, 256, 512, 1024, 2048, 4096]),   # halve bytes per pixel
+    (1398080, "PF_DXT5", [8, 16, 32, 64, 128, 256, 512, 1024]),
+    (87360, "PF_DXT5", [8, 16, 32, 64, 128, 256]),
+])
+def test_mip_chains_are_inferred_not_hardcoded(nbytes, fmt, sizes):
+    """Een wiel of helm is kleiner dan een frame en soms DXT1. Wie de keten
+    hardcodeert op 4096/DXT5 schrijft daar een .ubulk van de verkeerde lengte."""
+    assert ubulk.mip_chain(nbytes, fmt) == sizes
+
+
+def test_a_length_that_fits_no_chain_is_refused():
+    with pytest.raises(ValueError, match="geen mipketen"):
+        ubulk.mip_chain(FRAME_BYTES + 1, "PF_DXT5")
+
+
+def test_dxt1_and_dxt5_do_not_share_a_chain():
+    """Het formaat uit de .uasset bepaalt de bytes per pixel; verwar je die, dan komt
+    er een half of dubbel zo lange .ubulk uit."""
+    assert ubulk.mip_chain(FRAME_BYTES, "PF_DXT5") == FRAME_MIPS
+    with pytest.raises(ValueError):
+        ubulk.mip_chain(FRAME_BYTES, "PF_DXT1")
+
+
+def test_encode_refuses_a_top_mip_of_the_wrong_size():
     from PIL import Image
     small = Image.new("RGB", (2048, 2048))
-    alpha = [Image.new("L", (s, s)) for s in ubulk.SIZES]
-    with pytest.raises(ValueError, match="4096"):
-        ubulk.encode(small, alpha)
+    alpha = [Image.new("L", (s, s)) for s in FRAME_MIPS]
+    with pytest.raises(ValueError, match="4096x4096"):
+        ubulk.encode(small, alpha, "PF_DXT5")
 
 
-def test_encoding_produces_the_exact_bulk_size(tmp_path):
+def test_encoding_produces_the_exact_bulk_size():
     from PIL import Image
     top = Image.new("RGB", (4096, 4096), (10, 60, 200))
-    alpha = [Image.new("L", (s, s), 0) for s in ubulk.SIZES]
-    assert len(ubulk.encode(top, alpha)) == ubulk.TOTAL
+    alpha = [Image.new("L", (s, s), 0) for s in FRAME_MIPS]
+    assert len(ubulk.encode(top, alpha, "PF_DXT5")) == FRAME_BYTES
+
+
+def test_a_smaller_texture_encodes_to_its_own_size():
+    """Dezelfde code moet een wiel aankunnen, niet alleen een frame."""
+    from PIL import Image
+    sizes = ubulk.mip_chain(87360, "PF_DXT5")
+    top = Image.new("RGB", (sizes[-1], sizes[-1]), (200, 30, 10))
+    alpha = [Image.new("L", (s, s), 255) for s in sizes]
+    assert len(ubulk.encode(top, alpha, "PF_DXT5")) == 87360
 
 
 # Uit een echte PCM-asset (Frm_Cervel_TVL001_25_diff.uasset): naam, zoals het
