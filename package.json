@@ -7,8 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "todo": "node scripts/list-todos.mjs"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "vite": "^5.4.10"

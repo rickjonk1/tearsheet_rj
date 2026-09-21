@@ -20,110 +20,114 @@
   "home": {
     "title": "What happened?",
     "intro": "Choose what happened to you. You will then get short steps to follow.",
-    "order": [
-      "S1",
-      "S2",
-      "S3",
-      "S4",
-      "S5"
-    ],
+    "order": ["S1", "S2", "S3", "S4", "S5"],
     "checkinCardTitle": "How to check in safely",
     "checkinCardText": "Three steps to avoid problems.",
     "checkinCardLink": "See the three steps"
   },
   "common": {
     "stepsTitle": "What you can do",
+    "noteTitle": "Good to know",
     "helpTitle": "Still stuck?",
     "sourcesTitle": "Official information",
+    "doThisTitle": "Sort it out now",
     "openInNewTab": "opens in a new tab",
-    "situationsTitle": "Other situations"
+    "situationsTitle": "Other situations",
+    "sourceNote": "The information on this site comes from ovpay.nl, ns.nl, gvb.nl and htm.nl. Last checked on 21 September 2026. Rules and amounts can change, so check the transport company's website if you are unsure."
   },
   "help": {
-    "text": "Ask for help at a service point in the station, or call the customer service of the transport company. Bring the card or phone you checked in with.",
+    "text": "Call OVpay customer service: 0900-1433 (standard call charges), on weekdays from 07:00 to 17:00. Calling from outside the Netherlands? Use +31 10 892 5063.",
+    "servicePoint": "Rather talk to someone? At Amsterdam Centraal, GVB Tickets & Info is opposite the main entrance. Open Monday to Friday from 08:00 to 20:00 and at the weekend from 08:30 to 19:00. For train journeys, go to the NS Tickets & Service desk in the station hall. Bring the card or phone you checked in with.",
     "links": [
-      {
-        "label": "OVpay (official site)",
-        "url": "https://www.ovpay.nl",
-        "note": "TODO: check the correct page on ovpay.nl"
-      },
-      {
-        "label": "GVB customer service",
-        "url": "https://www.gvb.nl",
-        "note": "TODO: check the correct page on gvb.nl"
-      },
-      {
-        "label": "NS customer service",
-        "url": "https://www.ns.nl",
-        "note": "TODO: check the correct page on ns.nl"
-      }
-    ],
-    "servicePoint": "TODO: describe where the service points at Amsterdam Centraal are and when they are open."
+      { "label": "Your journey overview on OVpay", "url": "https://reisoverzicht.ovpay.nl/" },
+      { "label": "OVpay: service and contact", "url": "https://www.ovpay.nl/service-contact" },
+      { "label": "NS: forgot to check in or check out", "url": "https://www.ns.nl/en/service-and-contact/refund/forgot-to-check-in-or-check-out" },
+      { "label": "GVB: missed check-in or check-out", "url": "https://www.gvb.nl/klantenservice/uitcheck-gemist" }
+    ]
   },
   "situations": {
     "S1": {
       "button": "I may have paid twice",
       "title": "You may have paid twice",
-      "intro": "If you hold your whole wallet against the reader, more than one card can be read. You can check this in your banking app and on the OVpay website.",
+      "intro": "If you hold your whole wallet or phone case against the reader, two cards can check in at the same time. You then see two payments starting with NLOV.",
       "steps": [
-        "Open your banking app and look for more than one payment for the same trip. The description starts with NLOV. That is the reference number of your trip.",
-        "Only one payment? Then most likely nothing went wrong. TODO: check on ovpay.nl how long it takes before a trip becomes visible.",
-        "Two payments? Then look up your trips on the OVpay website using the reference number from your banking app.",
-        "TODO: check on ovpay.nl how to request a correction or refund and within what period.",
-        "Did you carry another card or phone? Check the payments on that one as well."
+        "Open your banking app and look for two payments starting with NLOV. A journey usually appears one day after you check out.",
+        "Did you carry more cards or your phone? Check your other accounts too. The second payment may be at another bank.",
+        "Go to reisoverzicht.ovpay.nl. Enter the reference number (the digits and letters after NLOV) and the amount that was charged. Click Reis zoeken (search journey).",
+        "Do this for both payments. That shows you whether it really is the same journey.",
+        "Were you charged twice? Ask for the extra amount back through your journey overview, or call OVpay on 0900-1433.",
+        "You then get the amount back in your account. Expect this to take a few days."
       ],
-      "helpExtra": "TODO: check what a service point can and cannot do about a double payment."
+      "note": "To avoid this next time: take one card out of your wallet and hold only that against the reader.",
+      "links": [{ "label": "Look up your journey at OVpay", "url": "https://reisoverzicht.ovpay.nl/" }],
+      "helpExtra": ""
     },
     "S2": {
       "button": "I forgot to check out",
       "title": "You forgot to check out",
-      "intro": "If you do not check out, the transport company does not know where your trip ended. You can ask for a correction.",
+      "intro": "If you do not check out, the transport company does not know where your journey ended. You then pay a fixed amount: the correction or boarding fare. That is usually more than your journey cost. You can put this right yourself.",
       "steps": [
-        "Write down which card or phone you checked in with, on what date and at which station.",
-        "In your banking app, find the payment with a description that starts with NLOV.",
-        "Request a correction. TODO: check on ovpay.nl where you do this and what details you need.",
-        "TODO: check on ovpay.nl within how many days you can request a correction.",
-        "Cannot do it online? Go to a service point in the station."
+        "Are you still at the station and is it less than 6 hours since you checked in? Then you can still check out at a gate or post.",
+        "Not possible? Then wait until 6 hours after your journey. After that you can correct the missed check-out.",
+        "In your banking app, find the payment starting with NLOV. Note the reference number and the amount.",
+        "Go to reisoverzicht.ovpay.nl, look up your journey and fill in the station or stop where you got off.",
+        "Did you travel by GVB tram, bus or metro? Then arrange it at ovpay.gvb.nl/mijn-gvb/reishistorie.",
+        "You get the amount you overpaid back in your account within 5 days."
       ],
-      "helpExtra": "TODO: check whether each transport company (NS, GVB) has its own place to do this."
+      "note": "You have 60 days to correct a missed check-in or check-out. For the train this is allowed 3 times per calendar year. For bus, tram and metro 3 times per half year. At GVB the fare for a missed check is €4.00 (full fare); on the train the amount is higher.",
+      "links": [
+        { "label": "Look up your journey at OVpay", "url": "https://reisoverzicht.ovpay.nl/" },
+        { "label": "Travelled with GVB? Go to Mijn GVB", "url": "https://ovpay.gvb.nl/mijn-gvb/reishistorie" }
+      ],
+      "helpExtra": ""
     },
     "S3": {
       "button": "The gate did not open",
       "title": "The gate did not open or showed a red cross",
-      "intro": "A red cross means the reader did not accept your card. There can be several reasons.",
+      "intro": "A red cross means the reader does not accept your card. Often there is a simple cause.",
       "steps": [
-        "Step aside so other travellers can pass. Then calmly try again.",
-        "Take one card or your phone out of your wallet and hold only that against the reader.",
-        "Use the same card or phone you checked in with. Another card will not work to check out.",
-        "Gate still closed? Ask a member of staff or go to a service point in the station.",
-        "TODO: check on ovpay.nl which causes there are (for example too little balance or a blocked card) and what the reader shows."
+        "Step aside so other people can pass. Take one card or your phone out of your wallet and calmly try again. Hold the card still against the reader.",
+        "Do you want to check out? Then use the same card you checked in with. Another card will not work.",
+        "Nothing happens? Check in your banking app whether contactless payment is switched on for that card.",
+        "Is there still an unpaid amount from an earlier journey? Then your card may be blocked for public transport. Call OVpay on 0900-1433 to check this.",
+        "Have a look at ovpay.nl/storingen to see whether there is a malfunction right now.",
+        "Gate still closed? Ask a member of staff or a service point in the station. Do not keep trying yourself: every attempt can count as a new check-in."
       ],
-      "helpExtra": "TODO: check what to do if the gate stays closed when you check out and you need to leave the station."
+      "note": "Not sure whether you are checked in? Hold your card against the reader again within 100 seconds. That does not check you in again, but it shows whether your check-in worked.",
+      "links": [{ "label": "OVpay service status", "url": "https://www.ovpay.nl/storingen" }],
+      "helpExtra": ""
     },
     "S4": {
       "button": "I do not know which card I used",
       "title": "Which card did I use?",
-      "intro": "You have to check out with the same card or phone you checked in with. If you do not, your trip stays open.",
+      "intro": "You have to check out with the same card or phone you checked in with. If you do not, your journey stays open and you pay too much.",
       "steps": [
-        "In your banking app, look for an account with a payment that starts with NLOV.",
-        "Do you pay with your phone or watch? Then check which card is set as the default card.",
-        "Still not sure? Check out with the card you use most and then check whether the trip is correct.",
-        "TODO: check on ovpay.nl how you can see which card started a trip.",
-        "In doubt, go to a service point. Bring all the cards you had with you."
+        "Did you pay with your phone or watch? Then the card set as the default card was used. Check your wallet app to see which one that is.",
+        "Look in your banking app to see which account has a payment starting with NLOV. That is the card you used. Note that the payment usually only appears a day later.",
+        "Are you at the gate right now and not sure? Try to check out with the card you use most often.",
+        "Do not hold all your cards against the reader one by one. You could accidentally check in again with another card.",
+        "Cannot check out? Ask a member of staff or a service point in the station for help.",
+        "Was your journey not closed properly? Correct it at reisoverzicht.ovpay.nl. You can do that from 6 hours after your journey and up to 60 days afterwards."
       ],
-      "helpExtra": "TODO: check whether staff can look up which card you checked in with."
+      "note": "Do you use the OVpay app? It shows your journeys up to 18 months back, so you do not have to search in your banking app.",
+      "links": [{ "label": "Look up your journey at OVpay", "url": "https://reisoverzicht.ovpay.nl/" }],
+      "helpExtra": ""
     },
     "S5": {
-      "button": "I want to check my trip or payment",
-      "title": "Check your trip or payment",
-      "intro": "Every OVpay trip has a reference number. That is a code starting with NLOV that appears with the payment in your banking app. You use that number to look up your trip.",
+      "button": "I want to check my journey or payment",
+      "title": "Check your journey or payment",
+      "intro": "Every OVpay journey has a reference number. That is the series of digits and letters after NLOV in your banking app, also called the payment reference. You use it to look up your journey.",
       "steps": [
-        "Open your banking app and find the payment for your trip.",
-        "In the description or details, look for the code starting with NLOV. That is the reference number.",
-        "Write the number down or copy it.",
-        "Go to the OVpay website and enter the reference number to see your trips. TODO: check on ovpay.nl which page this is and what other details you need.",
-        "Something not right? TODO: check on ovpay.nl how to request a correction."
+        "Open your banking app and find the payment for your journey. The description shows NLOV followed by digits and letters. Sometimes www.ovpay.nl is shown too.",
+        "Nothing there yet? A journey usually only appears one day after you check out.",
+        "Copy the digits and letters after NLOV. That is your reference number.",
+        "Go to reisoverzicht.ovpay.nl. Enter the reference number under Betalingskenmerk and the amount charged under Bedrag. Click Reis zoeken (search journey).",
+        "You now see where you checked in and out and what the journey cost.",
+        "Something not right? Correct the journey on the same page, or call OVpay on 0900-1433."
       ],
-      "helpExtra": "TODO: check what to do if you cannot find a reference number in your banking app."
+      "note": "Travel often? The OVpay app shows all your journeys together, up to 18 months back. Then you do not need the reference number.",
+      "links": [{ "label": "Look up your journey at OVpay", "url": "https://reisoverzicht.ovpay.nl/" }],
+      "helpExtra": ""
     }
   },
   "banks": {
@@ -132,99 +136,28 @@
     "chooseLabel": "Choose your bank",
     "backToGeneral": "General steps",
     "stepsTitle": "Steps in your banking app",
+    "disclaimer": "Banking apps change regularly. Does your app look different? Then find the payment and open its details. The description with NLOV is shown there.",
     "items": [
-      {
-        "id": "ing",
-        "name": "ING",
-        "steps": [
-          "TODO: check in the ING app where the description of a payment is shown.",
-          "TODO: check where the reference number (NLOV) is visible."
-        ]
-      },
-      {
-        "id": "rabobank",
-        "name": "Rabobank",
-        "steps": [
-          "TODO: check in the Rabobank app where the description of a payment is shown.",
-          "TODO: check where the reference number (NLOV) is visible."
-        ]
-      },
-      {
-        "id": "abnamro",
-        "name": "ABN AMRO",
-        "steps": [
-          "TODO: check in the ABN AMRO app where the description of a payment is shown.",
-          "TODO: check where the reference number (NLOV) is visible."
-        ]
-      },
-      {
-        "id": "bunq",
-        "name": "bunq",
-        "steps": [
-          "TODO: check in the bunq app where the description of a payment is shown.",
-          "TODO: check where the reference number (NLOV) is visible."
-        ]
-      },
-      {
-        "id": "sns",
-        "name": "SNS",
-        "steps": [
-          "TODO: check in the SNS app where the description of a payment is shown.",
-          "TODO: check where the reference number (NLOV) is visible."
-        ]
-      },
-      {
-        "id": "asn",
-        "name": "ASN Bank",
-        "steps": [
-          "TODO: check in the ASN app where the description of a payment is shown.",
-          "TODO: check where the reference number (NLOV) is visible."
-        ]
-      },
-      {
-        "id": "regiobank",
-        "name": "RegioBank",
-        "steps": [
-          "TODO: check in the RegioBank app where the description of a payment is shown.",
-          "TODO: check where the reference number (NLOV) is visible."
-        ]
-      },
-      {
-        "id": "revolut",
-        "name": "Revolut",
-        "steps": [
-          "TODO: check in the Revolut app where the description of a payment is shown.",
-          "TODO: check where the reference number (NLOV) is visible."
-        ]
-      },
-      {
-        "id": "anders",
-        "name": "Other bank",
-        "steps": [
-          "TODO: add general steps for other banks.",
-          "In your banking app, look for the code starting with NLOV with the payment."
-        ]
-      }
+      { "id": "ing", "name": "ING", "steps": ["Open the ING app and tap your payment account.", "Tap the payment for your journey.", "Under Omschrijving (description) you see NLOV followed by your reference number. Press and hold to copy the text."] },
+      { "id": "rabobank", "name": "Rabobank", "steps": ["Open the Rabo App and choose your payment account.", "Tap the payment for your journey.", "Under Omschrijving or Mededeling (description) you see NLOV followed by your reference number."] },
+      { "id": "abnamro", "name": "ABN AMRO", "steps": ["Open the ABN AMRO app and choose your payment account.", "Tap the payment and then tap Details.", "Under Omschrijving (description) you see NLOV followed by your reference number."] },
+      { "id": "bunq", "name": "bunq", "steps": ["Open the bunq app and tap your account.", "Tap the payment for your journey.", "The description shows NLOV followed by your reference number."] },
+      { "id": "sns", "name": "SNS", "steps": ["Open the SNS app and choose your payment account.", "Tap the payment for your journey.", "Under Omschrijving (description) you see NLOV followed by your reference number."] },
+      { "id": "asn", "name": "ASN Bank", "steps": ["Open the ASN app and choose your payment account.", "Tap the payment for your journey.", "Under Omschrijving (description) you see NLOV followed by your reference number."] },
+      { "id": "regiobank", "name": "RegioBank", "steps": ["Open the RegioBank app and choose your payment account.", "Tap the payment for your journey.", "Under Omschrijving (description) you see NLOV followed by your reference number."] },
+      { "id": "revolut", "name": "Revolut", "steps": ["Open the Revolut app and go to your transactions.", "Tap the payment for your journey.", "The description shows NLOV followed by your reference number."] },
+      { "id": "anders", "name": "Other bank", "steps": ["Find the payment for your journey in your banking app.", "Open the details of that payment.", "Look for the code starting with NLOV. The digits and letters after it are your reference number.", "Cannot find it? Call your bank or OVpay on 0900-1433."] }
     ]
   },
   "checkin": {
     "title": "How to check in safely",
     "intro": "These three steps prevent most problems.",
     "steps": [
-      {
-        "title": "Take one card out of your wallet",
-        "text": "Do not hold your whole wallet against the reader. Another card than you intend may be read."
-      },
-      {
-        "title": "Hold the card against the reader",
-        "text": "Wait at the reader until you hear a beep or see a green tick. Then it worked."
-      },
-      {
-        "title": "Check out with the same card",
-        "text": "When you get off, use exactly the same card or phone as when you checked in."
-      }
+      { "title": "Take one card out of your wallet", "text": "Do not hold your whole wallet or phone case against the reader. Two cards can then check in at the same time and you pay twice." },
+      { "title": "Hold the card still against the reader", "text": "Wait until you hear a beep and see a green sign. Only then are you checked in. Not sure? Hold your card against the reader again within 100 seconds. That does not check you in again." },
+      { "title": "Check out with the same card", "text": "When you get off, use exactly the same card or phone as when you checked in. Otherwise your journey does not count as finished." }
     ],
-    "note": "TODO: check on ovpay.nl what signal the reader gives for a successful check-in (sound, colour or text).",
+    "note": "Did you forget to check out after all? From 6 hours after your journey you can correct this yourself at reisoverzicht.ovpay.nl, up to 60 days after the journey.",
     "backLink": "Back to the home page"
   },
   "notFound": {

@@ -20,110 +20,114 @@
   "home": {
     "title": "Wat is er gebeurd?",
     "intro": "Kies wat er bij jou gebeurde. Je krijgt daarna korte uitleg en stappen.",
-    "order": [
-      "S1",
-      "S2",
-      "S3",
-      "S4",
-      "S5"
-    ],
+    "order": ["S1", "S2", "S3", "S4", "S5"],
     "checkinCardTitle": "Zo check je goed in",
     "checkinCardText": "Drie stappen om problemen te voorkomen.",
     "checkinCardLink": "Bekijk de drie stappen"
   },
   "common": {
     "stepsTitle": "Dit kun je doen",
+    "noteTitle": "Let op",
     "helpTitle": "Kom je er niet uit?",
     "sourcesTitle": "Officiële informatie",
+    "doThisTitle": "Direct regelen",
     "openInNewTab": "opent in een nieuw tabblad",
-    "situationsTitle": "Andere situaties"
+    "situationsTitle": "Andere situaties",
+    "sourceNote": "De informatie op deze site komt van ovpay.nl, ns.nl, gvb.nl en htm.nl. Laatst gecontroleerd op 21 september 2026. Regels en bedragen kunnen veranderen: kijk bij twijfel op de site van de vervoerder."
   },
   "help": {
-    "text": "Vraag hulp bij een servicepunt op het station of bel de klantenservice van de vervoerder. Neem je pas of telefoon mee waarmee je hebt ingecheckt.",
+    "text": "Bel de klantenservice van OVpay: 0900-1433 (gewone belkosten), op werkdagen van 07:00 tot 17:00. Bel je uit het buitenland? Gebruik +31 10 892 5063.",
+    "servicePoint": "Liever iemand spreken? Op Amsterdam Centraal zit GVB Tickets & Info tegenover de hoofdingang. Open op maandag tot en met vrijdag van 08:00 tot 20:00 en in het weekend van 08:30 tot 19:00. Voor treinreizen ga je naar de balie van NS Tickets & Service in de stationshal. Neem de pas of telefoon mee waarmee je hebt ingecheckt.",
     "links": [
-      {
-        "label": "OVpay (officiële site)",
-        "url": "https://www.ovpay.nl",
-        "note": "TODO: controleer de juiste pagina op ovpay.nl"
-      },
-      {
-        "label": "GVB klantenservice",
-        "url": "https://www.gvb.nl",
-        "note": "TODO: controleer de juiste pagina op gvb.nl"
-      },
-      {
-        "label": "NS klantenservice",
-        "url": "https://www.ns.nl",
-        "note": "TODO: controleer de juiste pagina op ns.nl"
-      }
-    ],
-    "servicePoint": "TODO: beschrijf waar de servicepunten op Amsterdam Centraal staan en wanneer ze open zijn."
+      { "label": "Je reisoverzicht op OVpay", "url": "https://reisoverzicht.ovpay.nl/" },
+      { "label": "OVpay: service en contact", "url": "https://www.ovpay.nl/service-contact" },
+      { "label": "NS: inchecken of uitchecken vergeten", "url": "https://www.ns.nl/service-en-contact/geld-terug/inchecken-of-uitchecken-vergeten" },
+      { "label": "GVB: in- of uitcheck gemist", "url": "https://www.gvb.nl/klantenservice/uitcheck-gemist" }
+    ]
   },
   "situations": {
     "S1": {
       "button": "Ik heb (misschien) dubbel betaald",
       "title": "Misschien dubbel betaald",
-      "intro": "Houd je je hele portemonnee tegen de lezer? Dan kan het gebeuren dat er meer dan één pas wordt gelezen. Je controleert dit in je bank-app en op de OVpay-site.",
+      "intro": "Houd je je hele portemonnee of telefoonhoesje tegen de kaartlezer? Dan kunnen er twee passen tegelijk inchecken. Je ziet dat terug als twee afschrijvingen die beginnen met NLOV.",
       "steps": [
-        "Kijk in je bank-app of er meer dan één afschrijving voor dezelfde reis staat. De omschrijving begint met NLOV. Dat is het referentienummer van je reis.",
-        "Staat er maar één afschrijving? Dan is er waarschijnlijk niets misgegaan. TODO: controleren op ovpay.nl hoe lang het duurt voordat een reis zichtbaar is.",
-        "Staan er wel twee afschrijvingen? Zoek dan op de OVpay-site je reizen op met het referentienummer uit je bank-app.",
-        "TODO: controleren op ovpay.nl hoe je een correctie of terugbetaling aanvraagt en binnen welke termijn dat moet.",
-        "Heb je nog een andere pas of telefoon bij je? Check dan ook daarvan de afschrijvingen."
+        "Open je bank-app en kijk of er twee afschrijvingen staan die beginnen met NLOV. Een reis staat er meestal een dag na het uitchecken op.",
+        "Had je meer passen of je telefoon bij je? Kijk dan ook op de andere rekeningen. De tweede afschrijving kan bij een andere bank staan.",
+        "Ga naar reisoverzicht.ovpay.nl. Vul het referentienummer in (de cijfers en letters achter NLOV) en het bedrag dat is afgeschreven. Klik op Reis zoeken.",
+        "Doe dit voor allebei de afschrijvingen. Zo zie je of het echt om dezelfde rit gaat.",
+        "Klopt het dat je dubbel hebt betaald? Vraag het te veel betaalde bedrag terug via je reisoverzicht, of bel OVpay op 0900-1433.",
+        "Je krijgt het bedrag daarna terug op je rekening. Reken op een paar dagen."
       ],
-      "helpExtra": "TODO: controleren wat een servicepunt wel en niet kan doen bij een dubbele betaling."
+      "note": "Voorkom dit de volgende keer: haal één pas uit je portemonnee en houd alleen die tegen de lezer.",
+      "links": [{ "label": "Zoek je reis op bij OVpay", "url": "https://reisoverzicht.ovpay.nl/" }],
+      "helpExtra": ""
     },
     "S2": {
       "button": "Ik ben vergeten uit te checken",
       "title": "Vergeten uit te checken",
-      "intro": "Als je niet uitcheckt, weet de vervoerder niet waar je reis eindigde. Je kunt vragen om een correctie.",
+      "intro": "Als je niet uitcheckt, weet de vervoerder niet waar je reis eindigde. Je betaalt dan een vast bedrag: het correctie- of instaptarief. Meestal is dat meer dan je rit kostte. Je kunt dit zelf aanpassen.",
       "steps": [
-        "Schrijf op met welke pas of telefoon je hebt ingecheckt, op welke datum en op welk station.",
-        "Zoek in je bank-app de afschrijving met de omschrijving die begint met NLOV.",
-        "Vraag een correctie aan. TODO: controleren op ovpay.nl waar je dit doet en welke gegevens je nodig hebt.",
-        "TODO: controleren op ovpay.nl binnen hoeveel dagen je een correctie kunt aanvragen.",
-        "Lukt het niet online? Ga dan naar een servicepunt op het station."
+        "Ben je nog op het station en is het nog geen 6 uur geleden dat je incheckte? Dan kun je alsnog uitchecken bij een poortje of paaltje.",
+        "Lukt dat niet? Wacht dan tot 6 uur na je reis. Daarna kun je de gemiste uitcheck aanpassen.",
+        "Zoek in je bank-app de afschrijving die begint met NLOV. Noteer het referentienummer en het bedrag.",
+        "Ga naar reisoverzicht.ovpay.nl, zoek je reis op en vul het station of de halte in waar je bent uitgestapt.",
+        "Reisde je met de tram, bus of metro van GVB? Dan regel je het via ovpay.gvb.nl/mijn-gvb/reishistorie.",
+        "Je krijgt het te veel betaalde bedrag binnen 5 dagen terug op je rekening."
       ],
-      "helpExtra": "TODO: controleren of je per vervoerder (NS, GVB) op een andere plek moet zijn."
+      "note": "Je hebt 60 dagen de tijd om een gemiste in- of uitcheck aan te passen. Bij de trein mag dit 3 keer per kalenderjaar. Bij bus, tram en metro 3 keer per half jaar. Bij GVB is het tarief voor een gemiste check €4,00 (voltarief); in de trein is het bedrag hoger.",
+      "links": [
+        { "label": "Zoek je reis op bij OVpay", "url": "https://reisoverzicht.ovpay.nl/" },
+        { "label": "Reisde je met GVB? Ga naar Mijn GVB", "url": "https://ovpay.gvb.nl/mijn-gvb/reishistorie" }
+      ],
+      "helpExtra": ""
     },
     "S3": {
       "button": "Het poortje ging niet open",
       "title": "Het poortje ging niet open of er kwam een rood kruis",
-      "intro": "Een rood kruis betekent dat de lezer je pas niet heeft geaccepteerd. Er kunnen meerdere oorzaken zijn.",
+      "intro": "Een rood kruis betekent dat de kaartlezer je pas niet accepteert. Vaak is er een simpele oorzaak.",
       "steps": [
-        "Stap opzij zodat andere reizigers erlangs kunnen. Probeer het daarna rustig opnieuw.",
-        "Haal één pas of je telefoon uit je portemonnee en houd alleen die tegen de lezer.",
-        "Gebruik dezelfde pas of telefoon waarmee je hebt ingecheckt. Een andere pas werkt niet om uit te checken.",
-        "Blijft het poortje dicht? Vraag hulp bij een medewerker of een servicepunt op het station.",
-        "TODO: controleren op ovpay.nl welke oorzaken er zijn (bijvoorbeeld te weinig saldo of een geblokkeerde pas) en wat de lezer dan laat zien."
+        "Stap opzij zodat anderen erlangs kunnen. Haal één pas of je telefoon uit je portemonnee en probeer het rustig opnieuw. Houd de pas stil tegen de lezer.",
+        "Wil je uitchecken? Gebruik dan dezelfde pas als waarmee je hebt ingecheckt. Een andere pas werkt niet.",
+        "Gebeurt er niets? Controleer in je bank-app of contactloos betalen aanstaat voor die pas.",
+        "Staat er nog een bedrag open van een eerdere reis? Dan kan je pas geblokkeerd zijn voor het OV. Bel OVpay op 0900-1433 om dit te controleren.",
+        "Kijk op ovpay.nl/storingen of er op dat moment een storing is.",
+        "Blijft het poortje dicht? Vraag hulp bij een medewerker of bij een servicepunt op het station. Blijf niet zelf proberen: elke poging kan een nieuwe incheck zijn."
       ],
-      "helpExtra": "TODO: controleren wat je moet doen als het poortje bij het uitchecken dicht blijft en je het station wel uit moet."
+      "note": "Twijfel je of je bent ingecheckt? Houd je pas binnen 100 seconden nog een keer tegen de lezer. Je checkt dan niet opnieuw in, maar je ziet of je incheck gelukt is.",
+      "links": [{ "label": "Storingen bij OVpay", "url": "https://www.ovpay.nl/storingen" }],
+      "helpExtra": ""
     },
     "S4": {
       "button": "Ik weet niet met welke pas ik heb ingecheckt",
       "title": "Welke pas heb ik gebruikt?",
-      "intro": "Je moet uitchecken met dezelfde pas of telefoon als waarmee je hebt ingecheckt. Anders blijft je reis openstaan.",
+      "intro": "Je moet uitchecken met dezelfde pas of telefoon als waarmee je hebt ingecheckt. Anders blijft je reis openstaan en betaal je te veel.",
       "steps": [
-        "Kijk in je bank-app bij welke rekening een afschrijving staat die begint met NLOV.",
-        "Gebruik je je telefoon of horloge om te betalen? Kijk dan welke pas daarin als standaardpas staat.",
-        "Weet je het nog steeds niet? Check dan uit met de pas die je het meest gebruikt en controleer daarna of de reis klopt.",
-        "TODO: controleren op ovpay.nl hoe je kunt zien met welke pas een reis is gestart.",
-        "Ga bij twijfel naar een servicepunt. Neem alle passen mee die je bij je had."
+        "Betaalde je met je telefoon of horloge? Dan is de pas gebruikt die daar als standaardpas in staat. Kijk in je wallet-app welke dat is.",
+        "Kijk in je bank-app op welke rekening een afschrijving met NLOV staat. Die pas heb je gebruikt. Let op: de afschrijving staat er meestal pas een dag later op.",
+        "Sta je nu bij het poortje en weet je het niet zeker? Probeer uit te checken met de pas die je het vaakst gebruikt.",
+        "Houd niet al je passen één voor één tegen de lezer. Je kunt dan per ongeluk opnieuw inchecken met een andere pas.",
+        "Lukt uitchecken niet? Vraag hulp bij een medewerker of een servicepunt op het station.",
+        "Is je reis niet goed afgesloten? Pas de rit aan via reisoverzicht.ovpay.nl. Dat kan vanaf 6 uur na je reis en tot 60 dagen erna."
       ],
-      "helpExtra": "TODO: controleren of een medewerker kan opzoeken met welke pas je hebt ingecheckt."
+      "note": "Gebruik je de OVpay-app? Daarin zie je je reizen tot 18 maanden terug. Dan hoef je niet in je bank-app te zoeken.",
+      "links": [{ "label": "Zoek je reis op bij OVpay", "url": "https://reisoverzicht.ovpay.nl/" }],
+      "helpExtra": ""
     },
     "S5": {
       "button": "Ik wil mijn reis of afschrijving controleren",
       "title": "Je reis of afschrijving controleren",
-      "intro": "Elke OVpay-reis heeft een referentienummer. Dat is een code die begint met NLOV en die in je bank-app bij de afschrijving staat. Met dat nummer zoek je je reis op.",
+      "intro": "Elke OVpay-reis heeft een referentienummer. Dat is de reeks cijfers en letters achter NLOV in je bank-app. Ook wel betalingskenmerk genoemd. Daarmee zoek je je reis op.",
       "steps": [
-        "Open je bank-app en zoek de afschrijving van je reis.",
-        "Kijk bij de omschrijving of de details naar de code die begint met NLOV. Dat is het referentienummer.",
-        "Schrijf het nummer over of kopieer het.",
-        "Ga naar de OVpay-site en vul het referentienummer in om je reizen te bekijken. TODO: controleren op ovpay.nl op welke pagina dit gebeurt en welke gegevens je verder nodig hebt.",
-        "Klopt er iets niet? TODO: controleren op ovpay.nl hoe je dan een correctie aanvraagt."
+        "Open je bank-app en zoek de afschrijving van je reis. In de omschrijving staat NLOV met daarachter cijfers en letters. Soms staat er ook www.ovpay.nl bij.",
+        "Zie je nog niets? Een reis staat er meestal pas een dag na het uitchecken op.",
+        "Neem de cijfers en letters achter NLOV over. Dat is je referentienummer.",
+        "Ga naar reisoverzicht.ovpay.nl. Vul bij Betalingskenmerk het referentienummer in en bij Bedrag het bedrag dat is afgeschreven. Klik op Reis zoeken.",
+        "Je ziet nu waar je bent in- en uitgecheckt en wat de rit kostte.",
+        "Klopt er iets niet? Pas de rit aan op dezelfde pagina, of bel OVpay op 0900-1433."
       ],
-      "helpExtra": "TODO: controleren wat je doet als je geen referentienummer kunt vinden in je bank-app."
+      "note": "Reis je vaker? In de OVpay-app zie je al je reizen bij elkaar, tot 18 maanden terug. Dan heb je het referentienummer niet nodig.",
+      "links": [{ "label": "Zoek je reis op bij OVpay", "url": "https://reisoverzicht.ovpay.nl/" }],
+      "helpExtra": ""
     }
   },
   "banks": {
@@ -132,99 +136,28 @@
     "chooseLabel": "Kies je bank",
     "backToGeneral": "Algemene uitleg",
     "stepsTitle": "Stappen in jouw bank-app",
+    "disclaimer": "Bank-apps veranderen regelmatig. Ziet jouw app er anders uit? Zoek dan de afschrijving op en open de details. Daar staat de omschrijving met NLOV.",
     "items": [
-      {
-        "id": "ing",
-        "name": "ING",
-        "steps": [
-          "TODO: controleren in de ING-app waar de omschrijving van een afschrijving staat.",
-          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
-        ]
-      },
-      {
-        "id": "rabobank",
-        "name": "Rabobank",
-        "steps": [
-          "TODO: controleren in de Rabo-app waar de omschrijving van een afschrijving staat.",
-          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
-        ]
-      },
-      {
-        "id": "abnamro",
-        "name": "ABN AMRO",
-        "steps": [
-          "TODO: controleren in de ABN AMRO-app waar de omschrijving van een afschrijving staat.",
-          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
-        ]
-      },
-      {
-        "id": "bunq",
-        "name": "bunq",
-        "steps": [
-          "TODO: controleren in de bunq-app waar de omschrijving van een afschrijving staat.",
-          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
-        ]
-      },
-      {
-        "id": "sns",
-        "name": "SNS",
-        "steps": [
-          "TODO: controleren in de SNS-app waar de omschrijving van een afschrijving staat.",
-          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
-        ]
-      },
-      {
-        "id": "asn",
-        "name": "ASN Bank",
-        "steps": [
-          "TODO: controleren in de ASN-app waar de omschrijving van een afschrijving staat.",
-          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
-        ]
-      },
-      {
-        "id": "regiobank",
-        "name": "RegioBank",
-        "steps": [
-          "TODO: controleren in de RegioBank-app waar de omschrijving van een afschrijving staat.",
-          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
-        ]
-      },
-      {
-        "id": "revolut",
-        "name": "Revolut",
-        "steps": [
-          "TODO: controleren in de Revolut-app waar de omschrijving van een afschrijving staat.",
-          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
-        ]
-      },
-      {
-        "id": "anders",
-        "name": "Andere bank",
-        "steps": [
-          "TODO: algemene uitleg voor overige banken invullen.",
-          "Zoek in je bank-app bij de afschrijving naar de code die begint met NLOV."
-        ]
-      }
+      { "id": "ing", "name": "ING", "steps": ["Open de ING-app en tik op je betaalrekening.", "Tik op de afschrijving van je reis.", "Bij Omschrijving staat NLOV met daarachter je referentienummer. Houd je vinger erop om de tekst te kopiëren."] },
+      { "id": "rabobank", "name": "Rabobank", "steps": ["Open de Rabo App en kies je betaalrekening.", "Tik op de afschrijving van je reis.", "Bij Omschrijving of Mededeling staat NLOV met daarachter je referentienummer."] },
+      { "id": "abnamro", "name": "ABN AMRO", "steps": ["Open de ABN AMRO-app en kies je betaalrekening.", "Tik op de afschrijving en daarna op Details.", "Bij Omschrijving staat NLOV met daarachter je referentienummer."] },
+      { "id": "bunq", "name": "bunq", "steps": ["Open de bunq-app en tik op je rekening.", "Tik op de betaling van je reis.", "Bij de omschrijving staat NLOV met daarachter je referentienummer."] },
+      { "id": "sns", "name": "SNS", "steps": ["Open de SNS-app en kies je betaalrekening.", "Tik op de afschrijving van je reis.", "Bij Omschrijving staat NLOV met daarachter je referentienummer."] },
+      { "id": "asn", "name": "ASN Bank", "steps": ["Open de ASN-app en kies je betaalrekening.", "Tik op de afschrijving van je reis.", "Bij Omschrijving staat NLOV met daarachter je referentienummer."] },
+      { "id": "regiobank", "name": "RegioBank", "steps": ["Open de RegioBank-app en kies je betaalrekening.", "Tik op de afschrijving van je reis.", "Bij Omschrijving staat NLOV met daarachter je referentienummer."] },
+      { "id": "revolut", "name": "Revolut", "steps": ["Open de Revolut-app en ga naar je transacties.", "Tik op de betaling van je reis.", "Bij de omschrijving (description) staat NLOV met daarachter je referentienummer."] },
+      { "id": "anders", "name": "Andere bank", "steps": ["Zoek in je bank-app de afschrijving van je reis.", "Open de details van die afschrijving.", "Zoek de code die begint met NLOV. De cijfers en letters daarachter zijn je referentienummer.", "Kun je hem niet vinden? Bel dan je bank of OVpay op 0900-1433."] }
     ]
   },
   "checkin": {
     "title": "Zo check je goed in",
     "intro": "Met deze drie stappen voorkom je de meeste problemen.",
     "steps": [
-      {
-        "title": "Pak één pas uit je portemonnee",
-        "text": "Houd niet je hele portemonnee tegen de lezer. Dan kan er een andere pas worden gelezen dan je bedoelt."
-      },
-      {
-        "title": "Houd de pas tegen de lezer",
-        "text": "Wacht bij de lezer tot je een piep hoort of een groen vinkje ziet. Dan is het gelukt."
-      },
-      {
-        "title": "Check uit met dezelfde pas",
-        "text": "Gebruik bij het uitstappen precies dezelfde pas of telefoon als bij het inchecken."
-      }
+      { "title": "Pak één pas uit je portemonnee", "text": "Houd niet je hele portemonnee of telefoonhoesje tegen de lezer. Er kunnen dan twee passen tegelijk inchecken en betaal je dubbel." },
+      { "title": "Houd de pas stil tegen de lezer", "text": "Wacht tot je een piep hoort en een groen teken ziet. Pas dan ben je ingecheckt. Twijfel je? Houd je pas binnen 100 seconden nog een keer tegen de lezer. Je checkt dan niet opnieuw in." },
+      { "title": "Check uit met dezelfde pas", "text": "Gebruik bij het uitstappen precies dezelfde pas of telefoon als bij het inchecken. Anders telt je reis niet als afgerond." }
     ],
-    "note": "TODO: controleren op ovpay.nl welk signaal de lezer geeft bij een gelukte check-in (geluid, kleur of tekst).",
+    "note": "Vergeet je toch uit te checken? Vanaf 6 uur na je reis kun je dit zelf aanpassen op reisoverzicht.ovpay.nl. Dat kan tot 60 dagen na je rit.",
     "backLink": "Terug naar de startpagina"
   },
   "notFound": {
