@@ -1,0 +1,240 @@
+{
+  "meta": {
+    "htmlLang": "en",
+    "title": "Piepcheck",
+    "otherLangCode": "nl",
+    "otherLangName": "Nederlands",
+    "otherLangShort": "NL",
+    "switchTo": "Schakel over naar het Nederlands"
+  },
+  "site": {
+    "name": "Piepcheck",
+    "tagline": "Help with checking in and out using OVpay"
+  },
+  "nav": {
+    "skip": "Skip to the main content",
+    "home": "Home",
+    "back": "Back",
+    "langLabel": "Language"
+  },
+  "home": {
+    "title": "What happened?",
+    "intro": "Choose what happened to you. You will then get short steps to follow.",
+    "order": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5"
+    ],
+    "checkinCardTitle": "How to check in safely",
+    "checkinCardText": "Three steps to avoid problems.",
+    "checkinCardLink": "See the three steps"
+  },
+  "common": {
+    "stepsTitle": "What you can do",
+    "helpTitle": "Still stuck?",
+    "sourcesTitle": "Official information",
+    "openInNewTab": "opens in a new tab",
+    "situationsTitle": "Other situations"
+  },
+  "help": {
+    "text": "Ask for help at a service point in the station, or call the customer service of the transport company. Bring the card or phone you checked in with.",
+    "links": [
+      {
+        "label": "OVpay (official site)",
+        "url": "https://www.ovpay.nl",
+        "note": "TODO: check the correct page on ovpay.nl"
+      },
+      {
+        "label": "GVB customer service",
+        "url": "https://www.gvb.nl",
+        "note": "TODO: check the correct page on gvb.nl"
+      },
+      {
+        "label": "NS customer service",
+        "url": "https://www.ns.nl",
+        "note": "TODO: check the correct page on ns.nl"
+      }
+    ],
+    "servicePoint": "TODO: describe where the service points at Amsterdam Centraal are and when they are open."
+  },
+  "situations": {
+    "S1": {
+      "button": "I may have paid twice",
+      "title": "You may have paid twice",
+      "intro": "If you hold your whole wallet against the reader, more than one card can be read. You can check this in your banking app and on the OVpay website.",
+      "steps": [
+        "Open your banking app and look for more than one payment for the same trip. The description starts with NLOV. That is the reference number of your trip.",
+        "Only one payment? Then most likely nothing went wrong. TODO: check on ovpay.nl how long it takes before a trip becomes visible.",
+        "Two payments? Then look up your trips on the OVpay website using the reference number from your banking app.",
+        "TODO: check on ovpay.nl how to request a correction or refund and within what period.",
+        "Did you carry another card or phone? Check the payments on that one as well."
+      ],
+      "helpExtra": "TODO: check what a service point can and cannot do about a double payment."
+    },
+    "S2": {
+      "button": "I forgot to check out",
+      "title": "You forgot to check out",
+      "intro": "If you do not check out, the transport company does not know where your trip ended. You can ask for a correction.",
+      "steps": [
+        "Write down which card or phone you checked in with, on what date and at which station.",
+        "In your banking app, find the payment with a description that starts with NLOV.",
+        "Request a correction. TODO: check on ovpay.nl where you do this and what details you need.",
+        "TODO: check on ovpay.nl within how many days you can request a correction.",
+        "Cannot do it online? Go to a service point in the station."
+      ],
+      "helpExtra": "TODO: check whether each transport company (NS, GVB) has its own place to do this."
+    },
+    "S3": {
+      "button": "The gate did not open",
+      "title": "The gate did not open or showed a red cross",
+      "intro": "A red cross means the reader did not accept your card. There can be several reasons.",
+      "steps": [
+        "Step aside so other travellers can pass. Then calmly try again.",
+        "Take one card or your phone out of your wallet and hold only that against the reader.",
+        "Use the same card or phone you checked in with. Another card will not work to check out.",
+        "Gate still closed? Ask a member of staff or go to a service point in the station.",
+        "TODO: check on ovpay.nl which causes there are (for example too little balance or a blocked card) and what the reader shows."
+      ],
+      "helpExtra": "TODO: check what to do if the gate stays closed when you check out and you need to leave the station."
+    },
+    "S4": {
+      "button": "I do not know which card I used",
+      "title": "Which card did I use?",
+      "intro": "You have to check out with the same card or phone you checked in with. If you do not, your trip stays open.",
+      "steps": [
+        "In your banking app, look for an account with a payment that starts with NLOV.",
+        "Do you pay with your phone or watch? Then check which card is set as the default card.",
+        "Still not sure? Check out with the card you use most and then check whether the trip is correct.",
+        "TODO: check on ovpay.nl how you can see which card started a trip.",
+        "In doubt, go to a service point. Bring all the cards you had with you."
+      ],
+      "helpExtra": "TODO: check whether staff can look up which card you checked in with."
+    },
+    "S5": {
+      "button": "I want to check my trip or payment",
+      "title": "Check your trip or payment",
+      "intro": "Every OVpay trip has a reference number. That is a code starting with NLOV that appears with the payment in your banking app. You use that number to look up your trip.",
+      "steps": [
+        "Open your banking app and find the payment for your trip.",
+        "In the description or details, look for the code starting with NLOV. That is the reference number.",
+        "Write the number down or copy it.",
+        "Go to the OVpay website and enter the reference number to see your trips. TODO: check on ovpay.nl which page this is and what other details you need.",
+        "Something not right? TODO: check on ovpay.nl how to request a correction."
+      ],
+      "helpExtra": "TODO: check what to do if you cannot find a reference number in your banking app."
+    }
+  },
+  "banks": {
+    "title": "Choose your bank (optional)",
+    "intro": "Every banking app looks a little different. Choose your bank for steps that match your app. Not sure? The general steps above work too.",
+    "chooseLabel": "Choose your bank",
+    "backToGeneral": "General steps",
+    "stepsTitle": "Steps in your banking app",
+    "items": [
+      {
+        "id": "ing",
+        "name": "ING",
+        "steps": [
+          "TODO: check in the ING app where the description of a payment is shown.",
+          "TODO: check where the reference number (NLOV) is visible."
+        ]
+      },
+      {
+        "id": "rabobank",
+        "name": "Rabobank",
+        "steps": [
+          "TODO: check in the Rabobank app where the description of a payment is shown.",
+          "TODO: check where the reference number (NLOV) is visible."
+        ]
+      },
+      {
+        "id": "abnamro",
+        "name": "ABN AMRO",
+        "steps": [
+          "TODO: check in the ABN AMRO app where the description of a payment is shown.",
+          "TODO: check where the reference number (NLOV) is visible."
+        ]
+      },
+      {
+        "id": "bunq",
+        "name": "bunq",
+        "steps": [
+          "TODO: check in the bunq app where the description of a payment is shown.",
+          "TODO: check where the reference number (NLOV) is visible."
+        ]
+      },
+      {
+        "id": "sns",
+        "name": "SNS",
+        "steps": [
+          "TODO: check in the SNS app where the description of a payment is shown.",
+          "TODO: check where the reference number (NLOV) is visible."
+        ]
+      },
+      {
+        "id": "asn",
+        "name": "ASN Bank",
+        "steps": [
+          "TODO: check in the ASN app where the description of a payment is shown.",
+          "TODO: check where the reference number (NLOV) is visible."
+        ]
+      },
+      {
+        "id": "regiobank",
+        "name": "RegioBank",
+        "steps": [
+          "TODO: check in the RegioBank app where the description of a payment is shown.",
+          "TODO: check where the reference number (NLOV) is visible."
+        ]
+      },
+      {
+        "id": "revolut",
+        "name": "Revolut",
+        "steps": [
+          "TODO: check in the Revolut app where the description of a payment is shown.",
+          "TODO: check where the reference number (NLOV) is visible."
+        ]
+      },
+      {
+        "id": "anders",
+        "name": "Other bank",
+        "steps": [
+          "TODO: add general steps for other banks.",
+          "In your banking app, look for the code starting with NLOV with the payment."
+        ]
+      }
+    ]
+  },
+  "checkin": {
+    "title": "How to check in safely",
+    "intro": "These three steps prevent most problems.",
+    "steps": [
+      {
+        "title": "Take one card out of your wallet",
+        "text": "Do not hold your whole wallet against the reader. Another card than you intend may be read."
+      },
+      {
+        "title": "Hold the card against the reader",
+        "text": "Wait at the reader until you hear a beep or see a green tick. Then it worked."
+      },
+      {
+        "title": "Check out with the same card",
+        "text": "When you get off, use exactly the same card or phone as when you checked in."
+      }
+    ],
+    "note": "TODO: check on ovpay.nl what signal the reader gives for a successful check-in (sound, colour or text).",
+    "backLink": "Back to the home page"
+  },
+  "notFound": {
+    "title": "This page does not exist",
+    "text": "Go back to the home page and choose what happened.",
+    "link": "Go to the home page"
+  },
+  "footer": {
+    "disclaimer": "This is a student project and not an official website of OVpay, GVB or NS.",
+    "project": "Made for the Public Lab studio, Amsterdam University of Applied Sciences.",
+    "privacy": "This site uses no cookies and stores no data."
+  }
+}

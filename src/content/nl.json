@@ -1,0 +1,240 @@
+{
+  "meta": {
+    "htmlLang": "nl",
+    "title": "Piepcheck",
+    "otherLangCode": "en",
+    "otherLangName": "English",
+    "otherLangShort": "EN",
+    "switchTo": "Switch to English"
+  },
+  "site": {
+    "name": "Piepcheck",
+    "tagline": "Hulp bij in- en uitchecken met OVpay"
+  },
+  "nav": {
+    "skip": "Ga direct naar de inhoud",
+    "home": "Startpagina",
+    "back": "Terug",
+    "langLabel": "Taal"
+  },
+  "home": {
+    "title": "Wat is er gebeurd?",
+    "intro": "Kies wat er bij jou gebeurde. Je krijgt daarna korte uitleg en stappen.",
+    "order": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5"
+    ],
+    "checkinCardTitle": "Zo check je goed in",
+    "checkinCardText": "Drie stappen om problemen te voorkomen.",
+    "checkinCardLink": "Bekijk de drie stappen"
+  },
+  "common": {
+    "stepsTitle": "Dit kun je doen",
+    "helpTitle": "Kom je er niet uit?",
+    "sourcesTitle": "Officiële informatie",
+    "openInNewTab": "opent in een nieuw tabblad",
+    "situationsTitle": "Andere situaties"
+  },
+  "help": {
+    "text": "Vraag hulp bij een servicepunt op het station of bel de klantenservice van de vervoerder. Neem je pas of telefoon mee waarmee je hebt ingecheckt.",
+    "links": [
+      {
+        "label": "OVpay (officiële site)",
+        "url": "https://www.ovpay.nl",
+        "note": "TODO: controleer de juiste pagina op ovpay.nl"
+      },
+      {
+        "label": "GVB klantenservice",
+        "url": "https://www.gvb.nl",
+        "note": "TODO: controleer de juiste pagina op gvb.nl"
+      },
+      {
+        "label": "NS klantenservice",
+        "url": "https://www.ns.nl",
+        "note": "TODO: controleer de juiste pagina op ns.nl"
+      }
+    ],
+    "servicePoint": "TODO: beschrijf waar de servicepunten op Amsterdam Centraal staan en wanneer ze open zijn."
+  },
+  "situations": {
+    "S1": {
+      "button": "Ik heb (misschien) dubbel betaald",
+      "title": "Misschien dubbel betaald",
+      "intro": "Houd je je hele portemonnee tegen de lezer? Dan kan het gebeuren dat er meer dan één pas wordt gelezen. Je controleert dit in je bank-app en op de OVpay-site.",
+      "steps": [
+        "Kijk in je bank-app of er meer dan één afschrijving voor dezelfde reis staat. De omschrijving begint met NLOV. Dat is het referentienummer van je reis.",
+        "Staat er maar één afschrijving? Dan is er waarschijnlijk niets misgegaan. TODO: controleren op ovpay.nl hoe lang het duurt voordat een reis zichtbaar is.",
+        "Staan er wel twee afschrijvingen? Zoek dan op de OVpay-site je reizen op met het referentienummer uit je bank-app.",
+        "TODO: controleren op ovpay.nl hoe je een correctie of terugbetaling aanvraagt en binnen welke termijn dat moet.",
+        "Heb je nog een andere pas of telefoon bij je? Check dan ook daarvan de afschrijvingen."
+      ],
+      "helpExtra": "TODO: controleren wat een servicepunt wel en niet kan doen bij een dubbele betaling."
+    },
+    "S2": {
+      "button": "Ik ben vergeten uit te checken",
+      "title": "Vergeten uit te checken",
+      "intro": "Als je niet uitcheckt, weet de vervoerder niet waar je reis eindigde. Je kunt vragen om een correctie.",
+      "steps": [
+        "Schrijf op met welke pas of telefoon je hebt ingecheckt, op welke datum en op welk station.",
+        "Zoek in je bank-app de afschrijving met de omschrijving die begint met NLOV.",
+        "Vraag een correctie aan. TODO: controleren op ovpay.nl waar je dit doet en welke gegevens je nodig hebt.",
+        "TODO: controleren op ovpay.nl binnen hoeveel dagen je een correctie kunt aanvragen.",
+        "Lukt het niet online? Ga dan naar een servicepunt op het station."
+      ],
+      "helpExtra": "TODO: controleren of je per vervoerder (NS, GVB) op een andere plek moet zijn."
+    },
+    "S3": {
+      "button": "Het poortje ging niet open",
+      "title": "Het poortje ging niet open of er kwam een rood kruis",
+      "intro": "Een rood kruis betekent dat de lezer je pas niet heeft geaccepteerd. Er kunnen meerdere oorzaken zijn.",
+      "steps": [
+        "Stap opzij zodat andere reizigers erlangs kunnen. Probeer het daarna rustig opnieuw.",
+        "Haal één pas of je telefoon uit je portemonnee en houd alleen die tegen de lezer.",
+        "Gebruik dezelfde pas of telefoon waarmee je hebt ingecheckt. Een andere pas werkt niet om uit te checken.",
+        "Blijft het poortje dicht? Vraag hulp bij een medewerker of een servicepunt op het station.",
+        "TODO: controleren op ovpay.nl welke oorzaken er zijn (bijvoorbeeld te weinig saldo of een geblokkeerde pas) en wat de lezer dan laat zien."
+      ],
+      "helpExtra": "TODO: controleren wat je moet doen als het poortje bij het uitchecken dicht blijft en je het station wel uit moet."
+    },
+    "S4": {
+      "button": "Ik weet niet met welke pas ik heb ingecheckt",
+      "title": "Welke pas heb ik gebruikt?",
+      "intro": "Je moet uitchecken met dezelfde pas of telefoon als waarmee je hebt ingecheckt. Anders blijft je reis openstaan.",
+      "steps": [
+        "Kijk in je bank-app bij welke rekening een afschrijving staat die begint met NLOV.",
+        "Gebruik je je telefoon of horloge om te betalen? Kijk dan welke pas daarin als standaardpas staat.",
+        "Weet je het nog steeds niet? Check dan uit met de pas die je het meest gebruikt en controleer daarna of de reis klopt.",
+        "TODO: controleren op ovpay.nl hoe je kunt zien met welke pas een reis is gestart.",
+        "Ga bij twijfel naar een servicepunt. Neem alle passen mee die je bij je had."
+      ],
+      "helpExtra": "TODO: controleren of een medewerker kan opzoeken met welke pas je hebt ingecheckt."
+    },
+    "S5": {
+      "button": "Ik wil mijn reis of afschrijving controleren",
+      "title": "Je reis of afschrijving controleren",
+      "intro": "Elke OVpay-reis heeft een referentienummer. Dat is een code die begint met NLOV en die in je bank-app bij de afschrijving staat. Met dat nummer zoek je je reis op.",
+      "steps": [
+        "Open je bank-app en zoek de afschrijving van je reis.",
+        "Kijk bij de omschrijving of de details naar de code die begint met NLOV. Dat is het referentienummer.",
+        "Schrijf het nummer over of kopieer het.",
+        "Ga naar de OVpay-site en vul het referentienummer in om je reizen te bekijken. TODO: controleren op ovpay.nl op welke pagina dit gebeurt en welke gegevens je verder nodig hebt.",
+        "Klopt er iets niet? TODO: controleren op ovpay.nl hoe je dan een correctie aanvraagt."
+      ],
+      "helpExtra": "TODO: controleren wat je doet als je geen referentienummer kunt vinden in je bank-app."
+    }
+  },
+  "banks": {
+    "title": "Kies je bank (optioneel)",
+    "intro": "Elke bank-app ziet er een beetje anders uit. Kies je bank voor stappen die bij jouw app passen. Weet je het niet? De algemene uitleg hierboven werkt ook.",
+    "chooseLabel": "Kies je bank",
+    "backToGeneral": "Algemene uitleg",
+    "stepsTitle": "Stappen in jouw bank-app",
+    "items": [
+      {
+        "id": "ing",
+        "name": "ING",
+        "steps": [
+          "TODO: controleren in de ING-app waar de omschrijving van een afschrijving staat.",
+          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
+        ]
+      },
+      {
+        "id": "rabobank",
+        "name": "Rabobank",
+        "steps": [
+          "TODO: controleren in de Rabo-app waar de omschrijving van een afschrijving staat.",
+          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
+        ]
+      },
+      {
+        "id": "abnamro",
+        "name": "ABN AMRO",
+        "steps": [
+          "TODO: controleren in de ABN AMRO-app waar de omschrijving van een afschrijving staat.",
+          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
+        ]
+      },
+      {
+        "id": "bunq",
+        "name": "bunq",
+        "steps": [
+          "TODO: controleren in de bunq-app waar de omschrijving van een afschrijving staat.",
+          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
+        ]
+      },
+      {
+        "id": "sns",
+        "name": "SNS",
+        "steps": [
+          "TODO: controleren in de SNS-app waar de omschrijving van een afschrijving staat.",
+          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
+        ]
+      },
+      {
+        "id": "asn",
+        "name": "ASN Bank",
+        "steps": [
+          "TODO: controleren in de ASN-app waar de omschrijving van een afschrijving staat.",
+          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
+        ]
+      },
+      {
+        "id": "regiobank",
+        "name": "RegioBank",
+        "steps": [
+          "TODO: controleren in de RegioBank-app waar de omschrijving van een afschrijving staat.",
+          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
+        ]
+      },
+      {
+        "id": "revolut",
+        "name": "Revolut",
+        "steps": [
+          "TODO: controleren in de Revolut-app waar de omschrijving van een afschrijving staat.",
+          "TODO: controleren waar het referentienummer (NLOV) zichtbaar is."
+        ]
+      },
+      {
+        "id": "anders",
+        "name": "Andere bank",
+        "steps": [
+          "TODO: algemene uitleg voor overige banken invullen.",
+          "Zoek in je bank-app bij de afschrijving naar de code die begint met NLOV."
+        ]
+      }
+    ]
+  },
+  "checkin": {
+    "title": "Zo check je goed in",
+    "intro": "Met deze drie stappen voorkom je de meeste problemen.",
+    "steps": [
+      {
+        "title": "Pak één pas uit je portemonnee",
+        "text": "Houd niet je hele portemonnee tegen de lezer. Dan kan er een andere pas worden gelezen dan je bedoelt."
+      },
+      {
+        "title": "Houd de pas tegen de lezer",
+        "text": "Wacht bij de lezer tot je een piep hoort of een groen vinkje ziet. Dan is het gelukt."
+      },
+      {
+        "title": "Check uit met dezelfde pas",
+        "text": "Gebruik bij het uitstappen precies dezelfde pas of telefoon als bij het inchecken."
+      }
+    ],
+    "note": "TODO: controleren op ovpay.nl welk signaal de lezer geeft bij een gelukte check-in (geluid, kleur of tekst).",
+    "backLink": "Terug naar de startpagina"
+  },
+  "notFound": {
+    "title": "Deze pagina bestaat niet",
+    "text": "Ga terug naar de startpagina en kies wat er is gebeurd.",
+    "link": "Naar de startpagina"
+  },
+  "footer": {
+    "disclaimer": "Dit is een studentenproject en geen officiële website van OVpay, GVB of NS.",
+    "project": "Gemaakt voor de studio Public Lab, Hogeschool van Amsterdam.",
+    "privacy": "Deze site gebruikt geen cookies en slaat geen gegevens op."
+  }
+}
