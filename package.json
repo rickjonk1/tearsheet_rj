@@ -1,0 +1,16 @@
+{
+  "name": "piepcheck",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Piepcheck - hulpsite voor reizigers met problemen bij in- en uitchecken met OVpay (studentenproject HvA).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "todo": "node scripts/list-todos.mjs"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}
