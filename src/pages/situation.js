@@ -1,17 +1,16 @@
-import { esc, helpBlock } from '../components/layout.js'
+import { esc, helpBlock, note, actionLinks } from '../components/layout.js'
 import { path } from '../router.js'
 import { icon } from '../icons.js'
 
-/** Zet een lijst met stappen om in genummerde stappen. TODO-regels krijgen een eigen stijl. */
+/** Zet een lijst met zinnen om in genummerde stappen. */
 function stepList(steps) {
   const items = steps
-    .map((step, i) => {
-      const isTodo = step.trim().startsWith('TODO')
-      return `<li${isTodo ? ' class="todo-step"' : ''}>
+    .map(
+      (step, i) => `<li>
         <span class="step-number" aria-hidden="true">${i + 1}</span>
         <span class="step-text">${esc(step)}</span>
       </li>`
-    })
+    )
     .join('')
   return `<ol class="steps">${items}</ol>`
 }
@@ -39,6 +38,7 @@ function bankBlock(t, route) {
           ? `<div class="bank-steps">
                <h3>${esc(t.banks.stepsTitle)}: ${esc(chosen.name)}</h3>
                ${stepList(chosen.steps)}
+               <p class="source-note">${esc(t.banks.disclaimer)}</p>
                <a class="linkish" href="${path(route.lang, 'situation', route.id)}">${esc(t.banks.backToGeneral)}</a>
              </div>`
           : ''
@@ -46,7 +46,7 @@ function bankBlock(t, route) {
     </section>`
 }
 
-/** Onderaan: door naar een andere situatie, zonder terug naar home te hoeven. */
+/** Onderaan: door naar een andere situatie, zonder eerst terug naar de homepage. */
 function otherSituations(t, route) {
   const items = t.home.order
     .filter((id) => id !== route.id)
@@ -73,6 +73,8 @@ export function situationPage(t, route) {
     <p class="lead">${esc(s.intro)}</p>
     <h2>${esc(t.common.stepsTitle)}</h2>
     ${stepList(s.steps)}
+    ${note(t, s.note)}
+    ${actionLinks(t, s.links)}
     ${route.id === 'S5' ? bankBlock(t, route) : ''}
     ${helpBlock(t, s.helpExtra)}
     ${otherSituations(t, route)}`

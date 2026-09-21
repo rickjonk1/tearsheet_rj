@@ -17,6 +17,7 @@ problemen met in- en uitchecken via OVpay op te lossen?
 - Bij S5 kun je optioneel je bank kiezen voor stappen die bij jouw app passen
 - Een pagina **"Zo check je goed in"** met drie stappen
 - Taalschakelaar **NL/EN** op elke pagina
+- Vormgeving in de stijl van OVpay, met een duidelijke disclaimer dat dit geen officiële site is
 - Geen inlog, geen accounts, geen koppeling met OVpay of banken, geen cookies,
   geen tracking en geen externe fonts of scripts
 
@@ -71,9 +72,9 @@ Belangrijke onderdelen:
 | `help.links` | Links naar officiële bronnen (OVpay, GVB, NS) |
 | `footer.disclaimer` | De disclaimer onderaan elke pagina |
 
-Regels die met `TODO` beginnen, krijgen automatisch een gele markering op de
-site. Zo zie je meteen wat er nog gecontroleerd moet worden. Zodra je de tekst
-vervangt door een gecontroleerde zin, verdwijnt de markering.
+Elke situatie kan ook een `note` hebben (het roze "Let op"-blok) en een lijstje
+`links` met knoppen naar de plek waar je iets echt regelt, zoals het
+reisoverzicht van OVpay.
 
 Na het aanpassen van een JSON-bestand ververst de dev-server vanzelf. Krijg je
 een witte pagina? Dan zit er waarschijnlijk een komma te veel of te weinig in de
@@ -106,7 +107,7 @@ src/
   pages/notFound.js     onbekende pagina
   content/nl.json       alle Nederlandse teksten
   content/en.json       alle Engelse teksten
-TODO.md                 lijst met teksten die nog gecontroleerd moeten worden
+BRONNEN.md              waar de feiten vandaan komen, en welke aannames er nog zijn
 ```
 
 ## Toegankelijkheid
@@ -135,9 +136,33 @@ De site is statisch. Na `npm run build` staat alles in `dist/`.
   voor Pages gebruikt. `vite.config.js` gebruikt `base: './'`, dus de site werkt
   ook in een submap.
 
+## Vormgeving
+
+De kleuren, vormen en maten komen van ovpay.nl, zodat de site herkenbaar
+aanvoelt voor reizigers:
+
+| Onderdeel | Waarde |
+|---|---|
+| Tekst | `#000066` (diep blauw) |
+| Hoofdkleur | `#4f6af0`, donkerder `#3e53bc` voor links en hover |
+| Zachte achtergrond | `#eff1fe` en `#dce2fe` |
+| Accent ("Let op") | `#ff0064`, tint `#ffe6f0` |
+| Kaarten | afgeronde hoeken van 24px |
+| Knoppen | pilvorm |
+
+Alle kleurcombinaties die we gebruiken halen minimaal 4.5:1 contrast, dus WCAG
+AA. Ze staan met een korte toelichting bovenaan `src/styles.css`.
+
+OVpay gebruikt de lettertypes Euclid Circular B en Mulish. Die laden wij
+**bewust niet**: externe fonts kosten laadtijd en kunnen gebruikers volgen. We
+gebruiken de letter van het apparaat zelf (`system-ui`).
+
+We gebruiken geen logo of merknaam van OVpay als afzender. Op elke pagina staat
+de disclaimer dat dit een studentenproject is.
+
 ## Inhoud en bronnen
 
-In de content staat bewust **geen verzonnen feitelijke informatie** over OVpay,
-tarieven, termijnen of hoe bank-apps werken. Overal waar een feit nodig is, staat
-een `TODO` die wij zelf controleren en invullen. Zie `TODO.md` voor het complete
-overzicht.
+De feitelijke informatie (termijnen, bedragen, telefoonnummers, waar je iets
+regelt) is opgezocht bij OVpay, NS, GVB en HTM. In `BRONNEN.md` staat per feit
+waar het vandaan komt, en welke teksten nog een aanname zijn die jullie zelf
+moeten controleren.

@@ -1,4 +1,4 @@
-import { esc, helpBlock } from '../components/layout.js'
+import { esc, helpBlock, note } from '../components/layout.js'
 import { path } from '../router.js'
 import { icon } from '../icons.js'
 
@@ -24,7 +24,7 @@ export function checkinPage(t, route) {
     <h1>${esc(t.checkin.title)}</h1>
     <p class="lead">${esc(t.checkin.intro)}</p>
     <ol class="steps steps-big">${steps}</ol>
-    <p class="todo">${esc(t.checkin.note)}</p>
+    ${note(t, t.checkin.note)}
     ${helpBlock(t)}
     <p><a class="button-secondary" href="${path(route.lang, 'home')}">${esc(t.checkin.backLink)}</a></p>`
 }

@@ -9,7 +9,34 @@ export function esc(value = '') {
     .replace(/"/g, '&quot;')
 }
 
-/** Kop van de site: naam, taalschakelaar en (optioneel) een terugknop. */
+/** Blok "Let op" met een korte extra mededeling. */
+export function note(t, text) {
+  if (!text) return ''
+  return `
+    <aside class="note">
+      <h2 class="note-title">${esc(t.common.noteTitle)}</h2>
+      <p>${esc(text)}</p>
+    </aside>`
+}
+
+/** Knoppen naar de plek waar je iets echt regelt (bijvoorbeeld je reisoverzicht). */
+export function actionLinks(t, links = []) {
+  if (!links.length) return ''
+  const items = links
+    .map(
+      (l) => `<li>
+        <a class="button-primary" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
+          ${esc(l.label)}
+          <span class="visually-hidden"> (${esc(t.common.openInNewTab)})</span>
+          <span class="external" aria-hidden="true">↗</span>
+        </a>
+      </li>`
+    )
+    .join('')
+  return `<ul class="action-list">${items}</ul>`
+}
+
+/** Kop van de site: naam, taalschakelaar en (behalve op de homepage) een terugknop. */
 export function header(t, route) {
   const otherLang = t.meta.otherLangCode
   const isHome = route.name === 'home'
@@ -17,7 +44,9 @@ export function header(t, route) {
     <header class="site-header">
       <div class="bar">
         <a class="brand" href="${path(route.lang, 'home')}">
-          <span class="brand-mark" aria-hidden="true">✓</span>
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" focusable="false"><path d="M8 17l5.5 5.5L24 11"/></svg>
+          </span>
           <span class="brand-text">
             <span class="brand-name">${esc(t.site.name)}</span>
             <span class="brand-tagline">${esc(t.site.tagline)}</span>
@@ -43,21 +72,21 @@ export function header(t, route) {
 export function footer(t) {
   return `
     <footer class="site-footer">
-      <p class="disclaimer"><strong>${esc(t.footer.disclaimer)}</strong></p>
+      <p class="disclaimer">${esc(t.footer.disclaimer)}</p>
       <p>${esc(t.footer.project)}</p>
       <p>${esc(t.footer.privacy)}</p>
     </footer>`
 }
 
-/** Blok "Kom je er niet uit?" met verwijzingen naar officiele bronnen. */
+/** Blok "Kom je er niet uit?" met telefoonnummer, servicepunt en officiele bronnen. */
 export function helpBlock(t, extra = '') {
   const links = t.help.links
     .map(
       (l) => `<li>
         <a href="${esc(l.url)}" rel="noopener noreferrer" target="_blank">
           ${esc(l.label)}<span class="visually-hidden"> (${esc(t.common.openInNewTab)})</span>
+          <span class="external" aria-hidden="true">↗</span>
         </a>
-        ${l.note ? `<span class="todo">${esc(l.note)}</span>` : ''}
       </li>`
     )
     .join('')
@@ -65,10 +94,11 @@ export function helpBlock(t, extra = '') {
     <section class="card help" aria-labelledby="help-title">
       <h2 id="help-title">${esc(t.common.helpTitle)}</h2>
       <p>${esc(t.help.text)}</p>
-      ${extra ? `<p class="todo">${esc(extra)}</p>` : ''}
-      <p class="todo">${esc(t.help.servicePoint)}</p>
+      ${extra ? `<p>${esc(extra)}</p>` : ''}
+      <p>${esc(t.help.servicePoint)}</p>
       <h3>${esc(t.common.sourcesTitle)}</h3>
       <ul class="link-list">${links}</ul>
+      <p class="source-note">${esc(t.common.sourceNote)}</p>
     </section>`
 }
 
